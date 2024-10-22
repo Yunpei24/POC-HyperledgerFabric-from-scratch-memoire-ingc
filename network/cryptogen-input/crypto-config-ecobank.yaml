@@ -1,0 +1,7 @@
+PeerOrgs:
+  - Name: Ecobank
+    Domain: ecobank.bceao.com
+    Template:
+      Count: 2
+      SANS:
+        - localhost

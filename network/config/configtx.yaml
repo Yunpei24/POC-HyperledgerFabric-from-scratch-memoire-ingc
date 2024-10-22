@@ -1,0 +1,156 @@
+Organizations:
+
+    - &OrdererOrg
+        Name: OrdererOrg
+        ID: OrdererMSP
+        MSPDir: ../crypto-material/ordererOrganizations/bceao.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+        OrdererEndpoints:
+            - orderer0.bceao.com:7050
+
+    - &Ecobank
+        Name: Ecobank
+        ID: EcobankMSP
+        MSPDir: ../crypto-material/peerOrganizations/ecobank.bceao.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('EcobankMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('EcobankMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('EcobankMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('EcobankMSP.member')"
+        AnchorPeers:
+            - Host: peer0.ecobank.bceao.com
+              Port: 7051
+
+    - &Corisbank
+        Name: Corisbank
+        ID: CorisbankMSP
+        MSPDir: ../crypto-material/peerOrganizations/corisbank.bceao.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('CorisbankMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('CorisbankMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('CorisbankMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('CorisbankMSP.member')"
+        AnchorPeers:
+            - Host: peer0.corisbank.bceao.com
+              Port: 8051
+
+Capabilities:
+    Channel: &ChannelCapabilities
+        V2_0: true
+    Orderer: &OrdererCapabilities
+        V2_0: true
+    Application: &ApplicationCapabilities
+        V2_0: true
+
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+    OrdererType: etcdraft
+    EtcdRaft:
+        Consenters:
+        - Host: orderer0.bceao.com
+          Port: 7050
+          ClientTLSCert: ../crypto-material/ordererOrganizations/bceao.com/orderers/orderer0.bceao.com/tls/server.crt
+          ServerTLSCert: ../crypto-material/ordererOrganizations/bceao.com/orderers/orderer0.bceao.com/tls/server.crt
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+    Capabilities:
+        <<: *ChannelCapabilities
+
+Profiles:
+    ApNetworkProfile:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            ApConsortium:
+                Organizations:
+                    - *Ecobank
+                    - *Corisbank
+    ApChannelProfile:
+        Consortium: ApConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Ecobank
+                - *Corisbank
+            Capabilities:
+                <<: *ApplicationCapabilities

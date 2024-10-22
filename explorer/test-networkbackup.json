@@ -1,0 +1,97 @@
+{
+	"name": "test-network",
+	"version": "2.0.0",
+	"client": {
+		"tlsEnable": true,
+		"adminCredential": {
+			"id": "exploreradmin",
+			"password": "exploreradminpw"
+		},
+		"enableAuthentication": true,
+		"organization": "EcobankMSP",
+		"connection": {
+			"timeout": {
+				"peer": {
+					"endorser": "300"
+				},
+				"orderer": "300"
+			}
+		}
+	},
+	"channels": {
+		"bceaochannel": {
+			"peers": {
+				"peer0.ecobank.bceao.com": {},
+				"peer1.ecobank.bceao.com": {},
+				"peer0.corisbank.bceao.com": {},
+				"peer1.corisbank.bceao.com": {}
+			},
+			"orderers": [
+				"orderer0.bceao.com"
+			],
+			"connection": {
+				"timeout": {
+					"peer": {
+						"endorser": "600",
+						"eventHub": "600",
+						"eventReg": "600"
+					}
+				}
+			}
+		}
+	},
+	"organizations": {
+		"EcobankMSP": {
+			"mspid": "EcobankMSP",
+			"adminPrivateKey": {
+				"path": "/tmp/crypto/peerOrganizations/ecobank.bceao.com/users/Admin@ecobank.bceao.com/msp/keystore/priv_sk"
+			},
+			"peers": [
+				"peer0.ecobank.bceao.com",
+				"peer1.ecobank.bceao.com"
+			],
+			"signedCert": {
+				"path": "/tmp/crypto/peerOrganizations/ecobank.bceao.com/users/Admin@ecobank.bceao.com/msp/signcerts/Admin@ecobank.bceao.com-cert.pem"
+			}
+		},
+		"CorisbankMSP": {
+			"mspid": "CorisbankMSP",
+			"adminPrivateKey": {
+				"path": "/tmp/crypto/peerOrganizations/corisbank.bceao.com/users/Admin@corisbank.bceao.com/msp/keystore/priv_sk"
+			},
+			"peers": [
+				"peer0.corisbank.bceao.com",
+				"peer1.corisbank.bceao.com"
+			],
+			"signedCert": {
+				"path": "/tmp/crypto/peerOrganizations/corisbank.bceao.com/users/Admin@corisbank.bceao.com/msp/signcerts/Admin@corisbank.bceao.com-cert.pem"
+			}
+		}
+	},
+	"peers": {
+		"peer0.ecobank.bceao.com": {
+			"tlsCACerts": {
+				"path": "/tmp/crypto/peerOrganizations/ecobank.bceao.com/peers/peer0.ecobank.bceao.com/tls/ca.crt"
+			},
+			"url": "grpcs://peer0.ecobank.bceao.com:7051"
+		},
+		"peer1.ecobank.bceao.com": {
+			"tlsCACerts": {
+				"path": "/tmp/crypto/peerOrganizations/ecobank.bceao.com/peers/peer1.ecobank.bceao.com/tls/ca.crt"
+			},
+			"url": "grpcs://peer1.ecobank.bceao.com:7042"
+		},
+		"peer0.corisbank.bceao.com": {
+			"tlsCACerts": {
+				"path": "/tmp/crypto/peerOrganizations/corisbank.bceao.com/peers/peer0.corisbank.bceao.com/tls/ca.crt"
+			},
+			"url": "grpcs://peer0.corisbank.bceao.com:8051"
+		},
+		"peer1.corisbank.bceao.com": {
+			"tlsCACerts": {
+				"path": "/tmp/crypto/peerOrganizations/corisbank.bceao.com/peers/peer1.corisbank.bceao.com/tls/ca.crt"
+			},
+			"url": "grpcs://peer1.corisbank.bceao.com:8042"
+		}
+	}
+}

@@ -1,0 +1,7 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: bceao.com
+    Template:
+      Count: 2
+      SANS:
+        - localhost

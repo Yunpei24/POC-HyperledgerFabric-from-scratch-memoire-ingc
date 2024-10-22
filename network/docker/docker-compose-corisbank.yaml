@@ -1,0 +1,91 @@
+version: '3'
+
+volumes:
+  peer0.corisbank.bceao.com:
+  peer1.corisbank.bceao.com:
+
+networks:
+  bceaonet:
+
+services:
+
+  couchdbcoris0:
+    container_name: couchdbcoris0
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - 7984:7984
+    networks:
+      - bceaonet
+
+  peer0.corisbank.bceao.com:
+    networks:
+      - bceaonet   
+    container_name: peer0.corisbank.bceao.com
+    image: hyperledger/fabric-peer:${IMAGE_TAG}
+    environment:
+      # Generic peer variables
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Specific peer variables
+      - CORE_PEER_ID=peer0.corisbank.bceao.com
+      - CORE_PEER_ADDRESS=peer0.corisbank.bceao.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.corisbank.bceao.com:8051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.corisbank.bceao.com:8051
+      - CORE_PEER_LOCALMSPID=CorisbankMSP
+    volumes:
+        - ../crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer0.corisbank.bceao.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer0.corisbank.bceao.com/tls:/etc/hyperledger/fabric/tls
+        - peer0.corisbank.bceao.com:/var/hyperledger/production
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    depends_on:
+      - couchdbcoris0
+    ports:
+      - 8051:8051
+    
+  couchdbcoris1:
+    container_name: couchdbcoris1
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - 8984:8984
+    networks:
+      - bceaonet
+
+  peer1.corisbank.bceao.com:
+    networks:
+      - bceaonet   
+    container_name: peer1.corisbank.bceao.com
+    image: hyperledger/fabric-peer:${IMAGE_TAG}
+    environment:
+      # Generic peer variables
+      - GODEBUG=netdns=go
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Specific peer variables
+      - CORE_PEER_ID=peer1.corisbank.bceao.com
+      - CORE_PEER_ADDRESS=peer1.corisbank.bceao.com:8042
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8042
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.corisbank.bceao.com:8042
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.corisbank.bceao.com:8042
+      - CORE_PEER_LOCALMSPID=CorisbankMSP
+    volumes:
+        - ../crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer1.corisbank.bceao.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer1.corisbank.bceao.com/tls:/etc/hyperledger/fabric/tls
+        - peer1.corisbank.bceao.com:/var/hyperledger/production
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    depends_on:
+      - couchdbcoris1
+    ports:
+      - 8042:8042

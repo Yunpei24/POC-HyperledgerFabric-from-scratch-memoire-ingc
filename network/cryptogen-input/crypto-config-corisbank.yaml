@@ -1,0 +1,7 @@
+PeerOrgs:
+  - Name: Corisbank
+    Domain: corisbank.bceao.com
+    Template:
+      Count: 2
+      SANS:
+        - localhost

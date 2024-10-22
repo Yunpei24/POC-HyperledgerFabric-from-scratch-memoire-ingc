@@ -1,0 +1,48 @@
+{
+	"name": "test-network",
+	"version": "1.0.0",
+	"client": {
+		"tlsEnable": true,
+		"adminCredential": {
+			"id": "exploreradmin",
+			"password": "exploreradminpw"
+		},
+		"enableAuthentication": true,
+		"organization": "EcobankMSP",
+		"connection": {
+			"timeout": {
+				"peer": {
+					"endorser": "300"
+				},
+				"orderer": "300"
+			}
+		}
+	},
+	"channels": {
+		"bceaochannel": {
+			"peers": {
+				"peer0.ecobank.bceao.com": {}
+			}
+		}
+	},
+	"organizations": {
+		"EcobankMSP": {
+			"mspid": "EcobankMSP",
+			"adminPrivateKey": {
+				"path": "/tmp/crypto/peerOrganizations/ecobank.bceao.com/users/Admin@ecobank.bceao.com/msp/keystore/priv_sk"
+			},
+			"peers": ["peer0.ecobank.bceao.com"],
+			"signedCert": {
+				"path": "/tmp/crypto/peerOrganizations/ecobank.bceao.com/users/Admin@ecobank.bceao.com/msp/signcerts/Admin@ecobank.bceao.com-cert.pem"
+			}
+		}
+	},
+	"peers": {
+		"peer0.ecobank.bceao.com": {
+			"tlsCACerts": {
+				"path": "/tmp/crypto/peerOrganizations/ecobank.bceao.com/peers/peer0.ecobank.bceao.com/tls/ca.crt"
+			},
+			"url": "grpcs://peer0.ecobank.bceao.com:7051"
+		}
+	}
+}

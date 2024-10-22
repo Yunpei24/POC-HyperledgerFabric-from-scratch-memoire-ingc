@@ -1,0 +1,12 @@
+deployChaincodes/
+
+chaincode-javascript/node_modules/
+
+# Ignorer tous les fichiers et dossiers
+fabric-samples/*
+
+# Ne pas ignorer le dossier bin dans fabric-samples
+!fabric-samples/bin/
+
+# Ne pas ignorer le contenu du dossier bin
+!fabric-samples/bin/**
