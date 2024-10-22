@@ -32,14 +32,15 @@ services:
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
-      #- CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_bceaonet
       # Specific peer variables
       - CORE_PEER_ID=peer0.ecobank.bceao.com
       - CORE_PEER_ADDRESS=peer0.ecobank.bceao.com:7051
       - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      # chaincode variables
       - CORE_CHAINCODE_LOGGING_LEVEL=info
       - CORE_PEER_CHAINCODEADDRESS=peeer0.ecobank.bceao.com:7053
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7053
+      # GOSSIP configuration
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.ecobank.bceao.com:7051
       - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.ecobank.bceao.com:7042
       - CORE_PEER_LOCALMSPID=EcobankMSP
@@ -85,10 +86,12 @@ services:
       - CORE_PEER_ID=peer1.ecobank.bceao.com
       - CORE_PEER_ADDRESS=peer1.ecobank.bceao.com:7042
       - CORE_PEER_LISTENADDRESS=0.0.0.0:7042
+      # chaincode variables
       - CORE_CHAINCODE_LOGGING_LEVEL=info
       - CORE_PEER_CHAINCODEADDRESS=peeer1.ecobank.bceao.com:7043
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7043
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.ecobank.bceao.com:7051
+      # GOSSIP configuration
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.ecobank.bceao.com:7051
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.ecobank.bceao.com:7042
       - CORE_PEER_LOCALMSPID=EcobankMSP
     volumes:
