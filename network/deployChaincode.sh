@@ -91,6 +91,8 @@ function printSeparator() {
 }
 
 # Exécution du processus complet pour Ecobank et Corisbank
+packageChaincode
+
 installChaincode "Ecobank" "peer0" 7051
 installChaincode "Corisbank" "peer0" 8051
 
