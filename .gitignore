@@ -10,3 +10,5 @@ fabric-samples/*
 
 # Ne pas ignorer le contenu du dossier bin
 !fabric-samples/bin/**
+
+fabric-rest-api/node_modules/
