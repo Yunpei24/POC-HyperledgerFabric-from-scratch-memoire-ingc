@@ -8,6 +8,15 @@ NO_COLOR='\033[0m'
 export PATH=${PWD}/../fabric-samples/bin:${PATH}
 export FABRIC_CFG_PATH=${PWD}/config
 
+preSetupJavaScript() {
+
+  pushd ../chaincode-javascript
+  sudo rm -r node_modules
+  npm install
+  sudo chmod -R a=rwx node_modules
+  popd
+}
+
 # Déclaration des variables
 CHANNEL_NAME="bceaochannel"
 CHAINCODE_NAME="bceaochaincode"
@@ -90,6 +99,7 @@ function printSeparator() {
     echo -e "${NO_COLOR}"
 }
 
+preSetupJavaScript
 # Exécution du processus complet pour Ecobank et Corisbank
 packageChaincode
 
