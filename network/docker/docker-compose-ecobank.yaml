@@ -38,7 +38,11 @@ services:
       - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
       # chaincode variables
       - CORE_CHAINCODE_LOGGING_LEVEL=info
-      - CORE_PEER_CHAINCODEADDRESS=peeer0.ecobank.bceao.com:7053
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=network_bceaonet
+      - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:${IMAGE_TAG}
+      - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:${IMAGE_TAG}
+      - CORE_CHAINCODE_NODE_RUNTIME=hyperledger/fabric-nodeenv:${IMAGE_TAG}
+      - CORE_PEER_CHAINCODEADDRESS=peer0.ecobank.bceao.com:7053
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7053
       # GOSSIP configuration
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.ecobank.bceao.com:7051
@@ -88,7 +92,11 @@ services:
       - CORE_PEER_LISTENADDRESS=0.0.0.0:7042
       # chaincode variables
       - CORE_CHAINCODE_LOGGING_LEVEL=info
-      - CORE_PEER_CHAINCODEADDRESS=peeer1.ecobank.bceao.com:7043
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=network_bceaonet
+      - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:${IMAGE_TAG}
+      - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:${IMAGE_TAG}
+      - CORE_CHAINCODE_NODE_RUNTIME=hyperledger/fabric-nodeenv:${IMAGE_TAG}
+      - CORE_PEER_CHAINCODEADDRESS=peer1.ecobank.bceao.com:7043
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7043
       # GOSSIP configuration
       - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.ecobank.bceao.com:7051

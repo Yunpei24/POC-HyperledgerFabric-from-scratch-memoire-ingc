@@ -1,5 +1,5 @@
 {
-    "name": "asset-transfer-basic",
+    "name": "chaincode-javascript",
     "version": "1.0.0",
     "description": "Asset-Transfer-Basic contract implemented in JavaScript",
     "main": "index.js",
@@ -16,8 +16,8 @@
     "author": "Hyperledger",
     "license": "Apache-2.0",
     "dependencies": {
-        "fabric-contract-api": "^2.0.0",
-        "fabric-shim": "^2.0.0",
+        "fabric-contract-api": "~2.5",
+        "fabric-shim": "~2.5",
         "json-stringify-deterministic": "^1.0.0",
         "sort-keys-recursive": "^2.1.0"
     },

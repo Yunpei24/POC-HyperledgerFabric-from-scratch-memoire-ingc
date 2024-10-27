@@ -1,7 +1,7 @@
 {
 	"network-configs": {
-		"test-network": {
-			"name": "test-network",
+		"network_bceaonet": {
+			"name": "network_bceaonet",
 			"profile": "./connection-profile/test-network.json"
 		}
 	},

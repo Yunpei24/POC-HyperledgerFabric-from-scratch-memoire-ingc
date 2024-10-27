@@ -2,7 +2,7 @@
 
 export PATH=${PWD}/../fabric-samples/bin:${PATH}
 export FABRIC_CFG_PATH=${PWD}/config
-export IMAGE_TAG=2.1
+export IMAGE_TAG=latest
 
 . ./utils.sh
 printSeparator "Generate crypto-material for Ecobank"
@@ -65,5 +65,15 @@ switchIdentity "Corisbank" 8042 "peer1" && echoCurrentFabricEnvironment && sleep
 printSeparator "Join Corisbank to channel"
 peer channel join -b ./channel-artifacts/bceaochannel.block
 
+sudo chmod -R a=rwx ./crypto-material/
+
+sudo rm -r ../explorer/crypto-material/
+sudo rm -r ../fabric-rest-api/crypto-material/
+
 sudo cp -r ./crypto-material ../explorer
+sudo cp -r ./crypto-material ../fabric-rest-api
+
+sudo chmod -R a=rwx ../explorer/crypto-material/
+sudo chmod -R a=rwx ../fabric-rest-api/crypto-material/
+
 printSeparator "Done!"

@@ -351,7 +351,20 @@ peer:
 
     # Path on the file system where peer will find MSP local configurations
     # The path may be relative to FABRIC_CFG_PATH or an absolute path.
-    mspConfigPath: msp
+    #mspConfigPath: ${CORE_PEER_MSPCONFIGPATH}
+    peer0.ecobank:
+        mspConfigPath: ../crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer0.ecobank.bceao.com/msp
+    
+    peer1.ecobank:
+        mspConfigPath: ../crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer1.ecobank.bceao.com/msp
+        # Autres paramètres pour le peer...
+        
+    peer0.corisbank:
+        mspConfigPath: ../crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer0.corisbank.bceao.com/msp
+        # Autres paramètres pour le peer...
+        
+    peer1.corisbank:
+        mspConfigPath: ../crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer1.corisbank.bceao.com/msp
 
     # Identifier of the local MSP
     # ----!!!!IMPORTANT!!!-!!!IMPORTANT!!!-!!!IMPORTANT!!!!----

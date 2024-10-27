@@ -9,12 +9,13 @@ export PATH=${PWD}/../fabric-samples/bin:${PATH}
 export FABRIC_CFG_PATH=${PWD}/config
 
 preSetupJavaScript() {
-
-  pushd ../chaincode-javascript
-  sudo rm -r node_modules
-  npm install
-  sudo chmod -R a=rwx node_modules
-  popd
+    printSeparator "Setting up JavaScript Environment"
+    pushd ../chaincode-javascript/
+    sudo rm -r node_modules || true
+    npm install
+    sudo chmod -R a=rwx node_modules
+    sudo rm package-lock.json || true
+    popd
 }
 
 # Déclaration des variables
@@ -25,6 +26,8 @@ CHAINCODE_PATH="../chaincode-javascript/"
 ORDERER_ADDRESS="localhost:7050"
 ORDERER_TLS_HOSTNAME="orderer0.bceao.com"
 ORDERER_CA="${PWD}/crypto-material/ordererOrganizations/bceao.com/orderers/orderer0.bceao.com/msp/tlscacerts/tlsca.bceao.com-cert.pem"
+
+sudo chmod -R a=rwx ../chaincode-javascript/
 
 # Fonction pour changer d'identité selon l'organisation
 function switchIdentity() {
@@ -52,16 +55,25 @@ function echoCurrentFabricEnvironment() {
 
 # Fonction pour packager le chaincode
 function packageChaincode() {
+    peer version
+    sudo rm ${CHAINCODE_NAME}.tar.gz || true
     printSeparator "Packaging Chaincode"
     peer lifecycle chaincode package ${CHAINCODE_NAME}.tar.gz --path ${CHAINCODE_PATH} --lang node --label ${CHAINCODE_NAME}_${CHAINCODE_VERSION}
+    echo "Accorder les permissions à" ${CHAINCODE_NAME}.tar.gz
     sudo chmod -R a=rwx ${CHAINCODE_NAME}.tar.gz
 }
 
 # Fonction pour installer le chaincode
 function installChaincode() {
-    printSeparator "Installing Chaincode for Org: $1"
+    printSeparator "Installing Chaincode for Org: $1 and peer $2"
     switchIdentity $1 $2 $3
+    echoCurrentFabricEnvironment
     peer lifecycle chaincode install ${CHAINCODE_NAME}.tar.gz
+    
+    if [ $? -ne 0 ]; then
+        echo "Failed to install chaincode on $1 $2"
+        exit 1
+    fi
     
     printSeparator "Querying Installed Chaincode for Org: $1"
     peer lifecycle chaincode queryinstalled
@@ -75,19 +87,59 @@ function installChaincode() {
 function approveChaincodeForOrg() {
     printSeparator "Approving Chaincode for Org: $1"
     switchIdentity $1 $2 $3
-    peer lifecycle chaincode approveformyorg -o ${ORDERER_ADDRESS} --ordererTLSHostnameOverride ${ORDERER_TLS_HOSTNAME} --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --package-id ${CC_PACKAGE_ID} --sequence 1 --tls --cafile ${ORDERER_CA}
+    echoCurrentFabricEnvironment
+    
+    peer lifecycle chaincode approveformyorg -o ${ORDERER_ADDRESS} \
+        --ordererTLSHostnameOverride ${ORDERER_TLS_HOSTNAME} \
+        --channelID ${CHANNEL_NAME} \
+        --name ${CHAINCODE_NAME} \
+        --version ${CHAINCODE_VERSION} \
+        --package-id ${CC_PACKAGE_ID} \
+        --sequence 1 \
+        --tls \
+        --cafile ${ORDERER_CA}
+    
+    if [ $? -ne 0 ]; then
+        echo "Failed to approve chaincode for $1"
+        exit 1
+    fi
     
     printSeparator "Checking Commit Readiness for Org: $1"
-    peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --tls --cafile ${ORDERER_CA} --output json
+    peer lifecycle chaincode checkcommitreadiness \
+        --channelID ${CHANNEL_NAME} \
+        --name ${CHAINCODE_NAME} \
+        --version ${CHAINCODE_VERSION} \
+        --sequence 1 \
+        --tls \
+        --cafile ${ORDERER_CA} \
+        --output json
 }
 
 # Fonction pour valider et commit le chaincode sur le canal
 function commitChaincode() {
     printSeparator "Committing Chaincode"
-    peer lifecycle chaincode commit -o ${ORDERER_ADDRESS} --ordererTLSHostnameOverride ${ORDERER_TLS_HOSTNAME} --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --tls --cafile ${ORDERER_CA} --peerAddresses localhost:7051 --tlsRootCertFiles ${PWD}/crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer0.ecobank.bceao.com/tls/ca.crt --peerAddresses localhost:8051 --tlsRootCertFiles ${PWD}/crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer0.corisbank.bceao.com/tls/ca.crt
+    peer lifecycle chaincode commit -o ${ORDERER_ADDRESS} \
+        --ordererTLSHostnameOverride ${ORDERER_TLS_HOSTNAME} \
+        --channelID ${CHANNEL_NAME} \
+        --name ${CHAINCODE_NAME} \
+        --version ${CHAINCODE_VERSION} \
+        --sequence 1 \
+        --tls \
+        --cafile ${ORDERER_CA} \
+        --peerAddresses localhost:7051 \
+        --tlsRootCertFiles ${PWD}/crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer0.ecobank.bceao.com/tls/ca.crt \
+        --peerAddresses localhost:8051 \
+        --tlsRootCertFiles ${PWD}/crypto-material/peerOrganizations/corisbank.bceao.com/peers/peer0.corisbank.bceao.com/tls/ca.crt
+    
+    if [ $? -ne 0 ]; then
+        echo "Failed to commit chaincode"
+        exit 1
+    fi
     
     printSeparator "Querying Committed Chaincode"
-    peer lifecycle chaincode querycommitted --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME}
+    peer lifecycle chaincode querycommitted \
+        --channelID ${CHANNEL_NAME} \
+        --name ${CHAINCODE_NAME}
 }
 
 # Fonction pour afficher un séparateur pour une meilleure lisibilité
@@ -99,14 +151,38 @@ function printSeparator() {
     echo -e "${NO_COLOR}"
 }
 
+# Exécution principale
+printSeparator "Starting Chaincode Deployment"
+
+# Préparation de l'environnement
 preSetupJavaScript
-# Exécution du processus complet pour Ecobank et Corisbank
+
+# Package du chaincode
 packageChaincode
 
-installChaincode "Ecobank" "peer0" 7051
-installChaincode "Corisbank" "peer0" 8051
+# Installation sur tous les peers
+printSeparator "Installing on All Peers"
 
+# Ecobank peers
+installChaincode "Ecobank" "peer0" 7051
+installChaincode "Ecobank" "peer1" 7042
+
+# Corisbank peers
+installChaincode "Corisbank" "peer0" 8051
+installChaincode "Corisbank" "peer1" 8042
+
+# Approbation par les organisations
 approveChaincodeForOrg "Ecobank" "peer0" 7051
 approveChaincodeForOrg "Corisbank" "peer0" 8051
 
+# Commit final
 commitChaincode
+
+printSeparator "Chaincode Deployment Complete"
+
+# Vérification finale
+printSeparator "Final Verification"
+peer lifecycle chaincode querycommitted \
+    --channelID ${CHANNEL_NAME} \
+    --name ${CHAINCODE_NAME} \
+    --output json

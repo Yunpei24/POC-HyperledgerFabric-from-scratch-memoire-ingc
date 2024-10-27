@@ -6,7 +6,6 @@
 
 'use strict';
 
-const clientManagement = require('./lib/clientBank');
-
-module.exports.ClientManagement = clientManagement;
-module.exports.contracts = [clientManagement];
+const clientManager = require('./lib/clientManager');
+module.exports.ClientManager = clientManager;
+module.exports.contracts = [clientManager];
