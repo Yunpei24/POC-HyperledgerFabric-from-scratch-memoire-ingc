@@ -1,0 +1,17 @@
+{
+    "channelName": "bceaochannel",
+    "chaincodeName": "bceaochaincode",
+    "organizations": {
+        "Ecobank": {
+            "mspId": "EcobankMSP",
+            "peers": [
+                {
+                    "name": "peer0.ecobank.bceao.com",
+                    "url": "localhost:7051"
+                }
+            ]
+        }
+    },
+    "cryptoPath": "../crypto-material",
+    "ordererUrl": "localhost:7050"
+}

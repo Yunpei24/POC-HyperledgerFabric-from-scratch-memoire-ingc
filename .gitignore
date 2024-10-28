@@ -14,3 +14,9 @@ fabric-samples/*
 fabric-rest-api/node_modules/
 
 npm-shrinkwrap.json
+
+bceao-blockchain-app/backend/node_modules/
+
+bceao-blockchain-app/backend/package-lock.json
+
+bceao-blockchain-app/crypto-material/

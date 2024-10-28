@@ -68,12 +68,12 @@ peer channel join -b ./channel-artifacts/bceaochannel.block
 sudo chmod -R a=rwx ./crypto-material/
 
 sudo rm -r ../explorer/crypto-material/
-sudo rm -r ../fabric-rest-api/crypto-material/
+sudo rm -r ../bceao-blockchain-app/crypto-material/
 
 sudo cp -r ./crypto-material ../explorer
-sudo cp -r ./crypto-material ../fabric-rest-api
+sudo cp -r ./crypto-material ../bceao-blockchain-app
 
 sudo chmod -R a=rwx ../explorer/crypto-material/
-sudo chmod -R a=rwx ../fabric-rest-api/crypto-material/
+sudo chmod -R a=rwx ../bceao-blockchain-app/crypto-material/
 
 printSeparator "Done!"
