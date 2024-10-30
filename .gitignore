@@ -20,3 +20,11 @@ bceao-blockchain-app/backend/node_modules/
 bceao-blockchain-app/backend/package-lock.json
 
 bceao-blockchain-app/crypto-material/
+
+bceao-blockchain-app/frontend/node_modules
+
+bceao-blockchain-app/frontend/package-lock.json
+
+bceao-blockchain-app/node_modules
+
+bceao-blockchain-app/package-lock.json

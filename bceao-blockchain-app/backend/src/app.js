@@ -1,6 +1,9 @@
+// backend/src/app.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const clientRoutes = require('./routes/client.routes');
+const authRoutes = require('./routes/auth.routes');
 const constants = require('../config/constants');
 
 const app = express();
@@ -9,17 +12,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use('/api/clients', clientRoutes);
-
-// Route de test simple
+// Route de test
 app.get('/test', (req, res) => {
     res.json({ message: 'API BCEAO Blockchain fonctionne!' });
 });
 
-// Démarrage du serveur
-app.listen(constants.PORT, () => {
-    console.log(`Serveur démarré sur le port ${constants.PORT}`);
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/clients', clientRoutes);
+
+// Gestion des erreurs
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Erreur serveur' });
+});
+
+const PORT = constants.PORT || process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Serveur démarré sur le port ${PORT}`);
 });
 
 module.exports = app;
