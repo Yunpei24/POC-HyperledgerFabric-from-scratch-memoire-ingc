@@ -11,8 +11,12 @@ export FABRIC_CFG_PATH=${PWD}/config
 preSetupJavaScript() {
     printSeparator "Setting up JavaScript Environment"
     pushd ../chaincode-javascript/
-    sudo rm -r node_modules || true
-    npm install
+    if [ ! -d "node_modules" ]; then
+        echo "Installing dependencies..."
+        npm install
+    fi
+    # sudo rm -r node_modules || true
+    # npm install
     sudo chmod -R a=rwx node_modules
     sudo rm package-lock.json || true
     popd

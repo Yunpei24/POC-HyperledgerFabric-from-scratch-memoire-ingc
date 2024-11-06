@@ -1,7 +1,7 @@
 // frontend/src/components/ClientDetails.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getClient, deactivateClient } from '../services/api';
+import { getClient, deactivateClient, activateClient } from '../services/api';
 
 function ClientDetails() {
     const { ubi } = useParams();
@@ -26,11 +26,40 @@ function ClientDetails() {
         fetchClient();
     }, [ubi]);
 
+    // Nouvelle fonction pour formater les nationalités
+    const formatNationalities = (client) => {
+        if (Array.isArray(client.nationalities) && client.nationalities.length > 0) {
+            return client.nationalities.join(', ');
+        }
+        // Si nationalities n'existe pas ou est vide, on regarde nationality
+        if (client.nationalities) {
+            // Si nationality est un tableau
+            if (Array.isArray(client.nationalities)) {
+                return client.nationalities.join(', ');
+            }
+            // Si nationality est une chaîne
+            return client.nationalities;
+        }
+        return 'Non spécifié';
+    };
+
     const handleDeactivate = async () => {
         if (window.confirm('Êtes-vous sûr de vouloir désactiver ce client ?')) {
             try {
                 await deactivateClient(ubi);
                 navigate('/');
+            } catch (err) {
+                setError(err.message);
+            }
+        }
+    };
+
+    const handleActivate = async () => {
+        if (window.confirm('Êtes-vous sûr de vouloir activer ce client ?')) {
+            try {
+                await activateClient(ubi);
+                const updatedClient = await getClient(ubi);
+                setClient(updatedClient);
             } catch (err) {
                 setError(err.message);
             }
@@ -111,9 +140,7 @@ function ClientDetails() {
                         <div>
                             <h3 className="text-gray-600">Nationalités</h3>
                             <p className="font-medium">
-                                {Array.isArray(client.nationalities) 
-                                    ? client.nationalities.join(', ') 
-                                    : client.nationality}
+                                {formatNationalities(client)}
                             </p>
                         </div>
                     </div>
@@ -144,12 +171,19 @@ function ClientDetails() {
                         >
                             Modifier
                         </Link>
-                        {client.isActive && (
+                        {client.isActive ? (
                             <button
                                 onClick={handleDeactivate}
                                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                             >
-                                Désactiver
+                                Démande Désactivation
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleActivate}
+                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                            >
+                                Démande Activation
                             </button>
                         )}
                     </div>

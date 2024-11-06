@@ -1,3 +1,4 @@
+// Dans Header.js
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -19,21 +20,22 @@ function Header() {
             <img src="/images/bceao-logo.jpeg" alt="BCEAO" className="h-8 w-auto" />
             <span className="text-xl font-bold">BCEAO Blockchain</span>
           </Link>
-          
           {user && (
             <div className="flex items-center space-x-8">
               <nav className="flex items-center space-x-4">
                 <Link to="/" className="hover:text-bceao-secondary">
-                  Liste des Clients
+                  Clients Actifs
                 </Link>
-                <Link 
-                  to="/clients/new" 
+                <Link to="/all-clients" className="hover:text-bceao-secondary">
+                  Tous les clients
+                </Link>
+                <Link
+                  to="/clients/new"
                   className="bg-bceao-secondary text-bceao-primary px-4 py-2 rounded hover:bg-yellow-500"
                 >
                   Nouveau Client
                 </Link>
               </nav>
-
               <div className="flex items-center space-x-4">
                 <div className="text-sm">
                   <div className="font-semibold">{user.username}</div>

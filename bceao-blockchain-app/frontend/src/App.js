@@ -8,6 +8,8 @@ import ClientList from './components/ClientList';
 import ClientForm from './components/ClientForm';
 import ClientDetails from './components/ClientDetails';
 import { useAuth } from './context/AuthContext';
+import ActiveClientList from './components/ActiveClientList';
+import AllClientsList from './components/AllClientsList';
 
 // Composant ProtectedRoute
 function ProtectedRoute({ children }) {
@@ -18,6 +20,18 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+// Composant layout pour éviter la répétition
+function Layout({ children }) {
+  return (
+    <>
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        {children}
+      </main>
+    </>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -26,47 +40,48 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             
+            {/* Route racine - Clients actifs */}
             <Route path="/" element={
               <ProtectedRoute>
-                <>
-                  <Header />
-                  <main className="container mx-auto px-4 py-8">
-                    <ClientList />
-                  </main>
-                </>
+                <Layout>
+                  <ActiveClientList />
+                </Layout>
               </ProtectedRoute>
             } />
-            
+
+            {/* Route pour tous les clients */}
+            <Route path="/all-clients" element={
+              <ProtectedRoute>
+                <Layout>
+                  <AllClientsList />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
+            {/* Route pour nouveau client */}
             <Route path="/clients/new" element={
               <ProtectedRoute>
-                <>
-                  <Header />
-                  <main className="container mx-auto px-4 py-8">
-                    <ClientForm />
-                  </main>
-                </>
+                <Layout>
+                  <ClientForm />
+                </Layout>
               </ProtectedRoute>
             } />
-            
+
+            {/* Route pour voir les détails d'un client */}
             <Route path="/clients/:ubi" element={
               <ProtectedRoute>
-                <>
-                  <Header />
-                  <main className="container mx-auto px-4 py-8">
-                    <ClientDetails />
-                  </main>
-                </>
+                <Layout>
+                  <ClientDetails />
+                </Layout>
               </ProtectedRoute>
             } />
-            
+
+            {/* Route pour éditer un client */}
             <Route path="/clients/:ubi/edit" element={
               <ProtectedRoute>
-                <>
-                  <Header />
-                  <main className="container mx-auto px-4 py-8">
-                    <ClientForm />
-                  </main>
-                </>
+                <Layout>
+                  <ClientForm />
+                </Layout>
               </ProtectedRoute>
             } />
           </Routes>

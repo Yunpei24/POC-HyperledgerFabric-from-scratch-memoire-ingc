@@ -132,6 +132,20 @@ class ClientController {
         }
     }
 
+    // Activer un client
+    async activateClient(req, res) {
+        try {
+            const { ubi } = req.params;
+            const { contract } = await connectToNetwork();
+
+            await contract.submitTransaction('ActivateClient', ubi);
+            res.json({ message: 'Client activé avec succès' });
+        } catch (error) {
+            console.error('Erreur activateClient:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     // Obtenir l'historique d'un client
     async getClientHistory(req, res) {
         try {

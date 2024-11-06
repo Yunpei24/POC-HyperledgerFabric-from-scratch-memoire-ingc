@@ -55,7 +55,7 @@ function ClientForm() {
                 dateOfBirth: formData.dateOfBirth,
                 gender: formData.gender,
                 email: formData.email,
-                nationality: formData.nationality
+                nationalities: formData.nationalities
             };
     
             if (ubi) {

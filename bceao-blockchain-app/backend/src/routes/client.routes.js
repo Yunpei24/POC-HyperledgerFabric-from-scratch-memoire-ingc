@@ -14,6 +14,7 @@ router.get('/:ubi', clientController.getClient);
 router.post('/create', clientController.createClient);
 router.put('/:ubi', clientController.updateClient);
 router.delete('/:ubi', clientController.deactivateClient);
+router.put('/:ubi/activate', clientController.activateClient);
 
 // Routes pour l'historique
 router.get('/:ubi/history', clientController.getClientHistory);

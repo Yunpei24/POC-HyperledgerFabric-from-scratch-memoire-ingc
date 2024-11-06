@@ -6,79 +6,126 @@
 
 'use strict';
 
-'use strict';
-
 const stringify = require('json-stringify-deterministic');
 const sortKeysRecursive = require('sort-keys-recursive');
 const { Contract } = require('fabric-contract-api');
+const { ClientIdentity } = require('fabric-shim');
+const ClientUtils = require('../utils/clientUtils');
 
 class ClientManager extends Contract {
 
-    async InitLedger(ctx) {
-        const clients = [
-            {
-                UBI: 'CLI001',
-                firstName: 'Thomas',
-                lastName: 'Martin',
-                dateOfBirth: '1985-03-15',
-                gender: 'M',
-                email: 'thomas.martin@email.com',
-                accountList: [
-                    { accountNumber: 'ACC001', bankName: 'BankA' }
-                ],
-                nationality: 'French',
-                imageDocumentIdentification: 'base64_encoded_image_1',
-                isActive: true,
-                docType: 'client'
-            },
-            {
-                UBI: 'CLI002',
-                firstName: 'Marie',
-                lastName: 'Dubois',
-                dateOfBirth: '1990-07-22',
-                gender: 'F',
-                email: 'marie.dubois@email.com',
-                accountList: [
-                    { accountNumber: 'ACC002', bankName: 'BankB' }
-                ],
-                nationality: 'French',
-                imageDocumentIdentification: 'base64_encoded_image_2',
-                isActive: true,
-                docType: 'client'
-            }
-        ];
+    getTransactionTimestamp(ctx) {
+        const timestamp = ctx.stub.getTxTimestamp();
+        const seconds = timestamp.seconds.low;
+        // Retourner uniquement la valeur en secondes, sans millisecondes
+        return new Date(seconds * 1000).toISOString().split('.')[0] + 'Z';
+    }
 
-        for (const client of clients) {
-            await ctx.stub.putState(client.UBI, Buffer.from(stringify(sortKeysRecursive(client))));
+    async ClientExists(ctx, ubi) {
+        const clientJSON = await ctx.stub.getState(ubi);
+        return clientJSON && clientJSON.length > 0;
+    }
+
+    async InitLedger(ctx) {
+        try {
+            const mspId = ctx.clientIdentity.getMSPID();
+            const timestamp = this.getTransactionTimestamp(ctx);
+    
+            // Définition des clients sans UBI préalable
+            const clientsData = [
+                {
+                    firstName: 'Thomas',
+                    lastName: 'Martin',
+                    dateOfBirth: '1985-03-15',
+                    gender: 'M',
+                    email: 'thomas.martin@email.com',
+                    accountList: [
+                        { accountNumber: 'ACC001', bankName: 'BankA' }
+                    ],
+                    nationalities: ['SEN'],
+                    imageDocumentIdentification: 'base64_encoded_image_1'
+                },
+                {
+                    firstName: 'Marie',
+                    lastName: 'Dubois',
+                    dateOfBirth: '1990-07-22',
+                    gender: 'F',
+                    email: 'marie.dubois@email.com',
+                    accountList: [
+                        { accountNumber: 'ACC002', bankName: 'BankB' }
+                    ],
+                    nationalities: ['CIV'],
+                    imageDocumentIdentification: 'base64_encoded_image_2'
+                }
+            ];
+    
+            // Créer les clients avec des UBI générés automatiquement
+            for (const clientData of clientsData) {
+                // Générer un UBI unique pour chaque client
+                const ubi = await ClientUtils.generateUniqueUBI(ctx);
+                
+                // Construire l'objet client complet
+                const client = {
+                    UBI: ubi,
+                    firstName: clientData.firstName,
+                    lastName: clientData.lastName,
+                    dateOfBirth: clientData.dateOfBirth,
+                    gender: clientData.gender,
+                    email: clientData.email,
+                    accountList: clientData.accountList,
+                    nationalities: clientData.nationalities,
+                    imageDocumentIdentification: clientData.imageDocumentIdentification,
+                    isActive: true,
+                    docType: 'client',
+                    createdBy: {
+                        mspId: mspId,
+                        timestamp: timestamp
+                    },
+                    modificationHistory: [{
+                        mspId: mspId,
+                        timestamp: timestamp,
+                        action: 'CREATE'
+                    }]
+                };
+    
+                // Sauvegarder le client dans la blockchain
+                await ctx.stub.putState(client.UBI, Buffer.from(stringify(sortKeysRecursive(client))));
+                console.log(`Client initialisé avec UBI: ${client.UBI}`);
+            }
+    
+            console.log('Initialisation du ledger terminée avec succès');
+        } catch (error) {
+            console.error('Erreur dans InitLedger:', error);
+            throw error;
         }
     }
 
-    async CreateClient(ctx, ubi, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageDocumentIdentification) {
+    async CreateClient(ctx, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageDocumentIdentification) {
         try {
             console.log('Début de CreateClient');
-            
-            const exists = await this.ClientExists(ctx, ubi);
-            if (exists) {
-                throw new Error(`Le client avec l'UBI ${ubi} existe déjà`);
-            }
 
-            // Parse les tableaux JSON
+            // Vérifier les doublons potentiels
+            // const duplicates = await UbiUtils.checkForDuplicates(ctx, firstName, lastName, dateOfBirth, email);
+            
+            // if (duplicates.length > 0) {
+            //     throw new Error(JSON.stringify({
+            //         error: 'Doublons potentiels détectés',
+            //         duplicates: duplicates
+            //     }));
+            // }
+
+            // Générer un UBI unique
+            const ubi = await ClientUtils.generateUniqueUBI(ctx);
+            
+            // Parse et validation des données
             const parsedAccountList = JSON.parse(accountList);
             const parsedNationalities = JSON.parse(nationalities);
+            
+            // Valider les nationalités
+            ClientUtils.validateNationalities(parsedNationalities);
 
-            console.log('Données parsées:', {
-                parsedAccountList,
-                parsedNationalities
-            });
-
-            // Validation des données
-            if (!Array.isArray(parsedNationalities)) {
-                throw new Error('Les nationalités doivent être fournies sous forme de tableau');
-            }
-
-            if (!Array.isArray(parsedAccountList)) {
-                throw new Error('La liste des comptes doit être fournie sous forme de tableau');
-            }
+            const mspId = ctx.clientIdentity.getMSPID();
+            const timestamp = this.getTransactionTimestamp(ctx);
 
             const client = {
                 UBI: ubi,
@@ -88,18 +135,22 @@ class ClientManager extends Contract {
                 gender: gender,
                 email: email,
                 accountList: parsedAccountList,
-                nationalities: parsedNationalities, // Changé de nationality à nationalities
+                nationalities: parsedNationalities,
                 imageDocumentIdentification: imageDocumentIdentification,
                 isActive: true,
-                docType: 'client'
+                docType: 'client',
+                createdBy: {
+                    mspId: mspId,
+                    timestamp: timestamp
+                },
+                modificationHistory: [{
+                    mspId: mspId,
+                    timestamp: timestamp,
+                    action: 'CREATE'
+                }]
             };
 
-            console.log('Client à sauvegarder:', client);
-
             await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
-            
-            console.log('Client sauvegardé avec succès');
-            
             return JSON.stringify(client);
         } catch (error) {
             console.error('Erreur dans CreateClient:', error);
@@ -107,23 +158,211 @@ class ClientManager extends Contract {
         }
     }
 
+    // async CreateClient(ctx, ubi, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageDocumentIdentification) {
+    //     try {
+    //         console.log('Début de CreateClient');
+            
+    //         const exists = await this.ClientExists(ctx, ubi);
+    //         if (exists) {
+    //             throw new Error(`Le client avec l'UBI ${ubi} existe déjà`);
+    //         }
+    
+    //         // Parse les tableaux JSON
+    //         const parsedAccountList = JSON.parse(accountList);
+    //         const parsedNationalities = JSON.parse(nationalities);
+    //         const mspId = ctx.clientIdentity.getMSPID();
+    //         const timestamp = this.getTransactionTimestamp(ctx);
+
+    //         console.log('Données parsées:', {
+    //             parsedAccountList,
+    //             parsedNationalities
+    //         });
+    
+    //         // Validation des données
+    //         if (!Array.isArray(parsedNationalities)) {
+    //             throw new Error('Les nationalités doivent être fournies sous forme de tableau');
+    //         }
+    
+    //         if (!Array.isArray(parsedAccountList)) {
+    //             throw new Error('La liste des comptes doit être fournie sous forme de tableau');
+    //         }
+    
+    
+    //         const client = {
+    //             UBI: ubi,
+    //             firstName: firstName,
+    //             lastName: lastName,
+    //             dateOfBirth: dateOfBirth,
+    //             gender: gender,
+    //             email: email,
+    //             accountList: parsedAccountList,
+    //             nationalities: parsedNationalities,
+    //             imageDocumentIdentification: imageDocumentIdentification,
+    //             isActive: true,
+    //             docType: 'client',
+    //             createdBy: {
+    //                 mspId: mspId,
+    //                 timestamp: timestamp
+    //             },
+    //             modificationHistory: [{
+    //                 mspId: mspId,
+    //                 timestamp: timestamp,
+    //                 action: 'CREATE'
+    //             }]
+    //         };
+
+    //         await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
+    //         return JSON.stringify(client);
+    //     } catch (error) {
+    //         console.error('Erreur dans CreateClient:', error);
+    //         throw error;
+    //     }
+    // }
+    
     async ReadClient(ctx, ubi) {
-        console.log('Lecture du client:', ubi);
-        const clientJSON = await ctx.stub.getState(ubi);
-        if (!clientJSON || clientJSON.length === 0) {
-            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+        try {
+            console.log('Lecture du client:', ubi);
+            const clientJSON = await ctx.stub.getState(ubi);
+            if (!clientJSON || clientJSON.length === 0) {
+                throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+            }
+
+            // Ajouter une entrée dans l'historique pour la lecture
+            const client = JSON.parse(clientJSON.toString());
+            const mspId = ctx.clientIdentity.getMSPID();
+            
+            // Facultatif : on peut ajouter la lecture à l'historique
+            client.modificationHistory = [
+                ...(client.modificationHistory || []),
+                {
+                    mspId: mspId,
+                    timestamp: new Date().toISOString(),
+                    action: 'READ'
+                }
+            ];
+
+            // Mise à jour de l'état avec la nouvelle entrée d'historique
+            await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
+            
+            return JSON.stringify(client);
+        } catch (error) {
+            console.error('Erreur dans ReadClient:', error);
+            throw error;
         }
-        return clientJSON.toString();
     }
 
-    // UpdateClient met à jour un client existant dans le world state
-    async UpdateClient(ctx, ubi, firstName, lastName, dateOfBirth, gender, email, accountList, nationality, imageDocumentIdentification) {
+    async GetAllClients(ctx) {
+        try {
+            const allResults = [];
+            const iterator = await ctx.stub.getStateByRange('', '');
+            
+            while (true) {
+                const result = await iterator.next();
+                if (result.done) {
+                    break;
+                }
+
+                const strValue = Buffer.from(result.value.value.toString()).toString('utf8');
+                let record;
+                try {
+                    record = JSON.parse(strValue);
+                    // Ne retourner que les documents de type 'client'
+                    if (record.docType === 'client') {
+                        // Ajouter des métadonnées sur la requête
+                        record.queryMetadata = {
+                            queriedBy: {
+                                mspId: ctx.clientIdentity.getMSPID(),
+                                timestamp: new Date().toISOString()
+                            }
+                        };
+                        allResults.push(record);
+                    }
+                } catch (err) {
+                    console.log('Erreur lors du parsing:', err);
+                    record = strValue;
+                }
+            }
+            
+            await iterator.close();
+
+            // Trier les résultats par UBI pour une présentation cohérente
+            allResults.sort((a, b) => a.UBI.localeCompare(b.UBI));
+            
+            return JSON.stringify(allResults);
+        } catch (error) {
+            console.error('Erreur dans GetAllClients:', error);
+            throw error;
+        }
+    }
+
+    async GetActiveClients(ctx) {
+        try {
+            const allResults = [];
+            const iterator = await ctx.stub.getStateByRange('', '');
+            const mspId = ctx.clientIdentity.getMSPID();
+            const queryTimestamp = new Date().toISOString();
+            
+            while (true) {
+                const result = await iterator.next();
+                if (result.done) {
+                    break;
+                }
+
+                const strValue = Buffer.from(result.value.value.toString()).toString('utf8');
+                try {
+                    const record = JSON.parse(strValue);
+                    // Ne retourner que les clients actifs
+                    if (record.docType === 'client' && record.isActive === true) {
+                        // Ajouter des métadonnées sur la requête
+                        record.queryMetadata = {
+                            queriedBy: {
+                                mspId: mspId,
+                                timestamp: queryTimestamp
+                            },
+                            filter: 'ACTIVE_ONLY'
+                        };
+                        allResults.push(record);
+                    }
+                } catch (err) {
+                    console.log('Erreur lors du parsing:', err);
+                }
+            }
+            
+            await iterator.close();
+
+            // Enrichir la réponse avec des métadonnées
+            const response = {
+                queryInfo: {
+                    timestamp: queryTimestamp,
+                    querier: mspId,
+                    totalResults: allResults.length
+                },
+                clients: allResults.sort((a, b) => a.UBI.localeCompare(b.UBI))
+            };
+            
+            return JSON.stringify(response);
+        } catch (error) {
+            console.error('Erreur dans GetActiveClients:', error);
+            throw error;
+        }
+    }
+
+    // Modification de UpdateClient
+    async UpdateClient(ctx, ubi, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageDocumentIdentification) {
         const exists = await this.ClientExists(ctx, ubi);
         if (!exists) {
             throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
         }
-
+    
+        // Récupérer le client existant
+        const clientString = await this.ReadClient(ctx, ubi);
+        const existingClient = JSON.parse(clientString);
+    
+        const mspId = ctx.clientIdentity.getMSPID();
+        const timestamp = this.getTransactionTimestamp(ctx);
+    
         const updatedClient = {
+            ...existingClient,
             UBI: ubi,
             firstName: firstName,
             lastName: lastName,
@@ -131,179 +370,412 @@ class ClientManager extends Contract {
             gender: gender,
             email: email,
             accountList: JSON.parse(accountList),
-            nationality: nationality,
+            nationalities: nationalities,
             imageDocumentIdentification: imageDocumentIdentification,
             isActive: true,
-            docType: 'client'
+            docType: 'client',
+            modificationHistory: [
+                ...(existingClient.modificationHistory || []),
+                {
+                    mspId: mspId,
+                    timestamp: timestamp,
+                    action: 'UPDATE'
+                }
+            ]
         };
-
-        return ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(updatedClient))));
+    
+        await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(updatedClient))));
+        return JSON.stringify(updatedClient);
     }
-
-    // DeactivateClient désactive un client au lieu de le supprimer
-    async DeactivateClient(ctx, ubi) {
-        const exists = await this.ClientExists(ctx, ubi);
-        if (!exists) {
-            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
-        }
-
-        const clientString = await this.ReadClient(ctx, ubi);
-        const client = JSON.parse(clientString);
-        client.isActive = false;
-
-        return ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
-    }
-
-    // ClientExists vérifie si un client existe dans le world state
-    async ClientExists(ctx, ubi) {
-        const clientJSON = await ctx.stub.getState(ubi);
-        return clientJSON && clientJSON.length > 0;
-    }
-
-    // AddAccount ajoute un nouveau compte à la liste des comptes d'un client
-    async AddAccount(ctx, ubi, accountNumber, bankName) {
-        const clientString = await this.ReadClient(ctx, ubi);
-        const client = JSON.parse(clientString);
-        
-        client.accountList.push({
-            accountNumber: accountNumber,
-            bankName: bankName
-        });
-
-        return ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
-    }
-
-    // RemoveAccount supprime un compte de la liste des comptes d'un client
-    async RemoveAccount(ctx, ubi, accountNumber) {
-        const clientString = await this.ReadClient(ctx, ubi);
-        const client = JSON.parse(clientString);
-        
-        client.accountList = client.accountList.filter(account => account.accountNumber !== accountNumber);
-
-        return ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
-    }
-
-    // GetAllClients retourne tous les clients trouvés dans le world state
-    async GetAllClients(ctx) {
-        const allResults = [];
-        const iterator = await ctx.stub.getStateByRange('', '');
-        let result = await iterator.next();
-        
-        while (!result.done) {
-            const strValue = Buffer.from(result.value.value.toString()).toString('utf8');
-            let record;
-            try {
-                record = JSON.parse(strValue);
-                // Ne retourner que les documents de type 'client'
-                if (record.docType === 'client') {
-                    allResults.push(record);
-                }
-            } catch (err) {
-                console.log(err);
-                record = strValue;
-            }
-            result = await iterator.next();
-        }
-        return JSON.stringify(allResults);
-    }
-
-    // GetActiveClients retourne tous les clients actifs
-    async GetActiveClients(ctx) {
-        const allResults = [];
-        const iterator = await ctx.stub.getStateByRange('', '');
-        let result = await iterator.next();
-        
-        while (!result.done) {
-            const strValue = Buffer.from(result.value.value.toString()).toString('utf8');
-            let record;
-            try {
-                record = JSON.parse(strValue);
-                // Ne retourner que les clients actifs
-                if (record.docType === 'client' && record.isActive === true) {
-                    allResults.push(record);
-                }
-            } catch (err) {
-                console.log(err);
-                record = strValue;
-            }
-            result = await iterator.next();
-        }
-        return JSON.stringify(allResults);
-    }
-
-    // UpdateClientAttributes permet de mettre à jour un ou plusieurs attributs d'un client
+    
+    // async UpdateClientAttributes(ctx, ubi, changes) {
+    //     const exists = await this.ClientExists(ctx, ubi);
+    //     if (!exists) {
+    //         throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+    //     }
+    
+    //     const clientString = await this.ReadClient(ctx, ubi);
+    //     const client = JSON.parse(clientString);
+    //     const updates = JSON.parse(changes);
+    
+    //     const modifiableFields = [
+    //         'firstName',
+    //         'lastName',
+    //         'dateOfBirth',
+    //         'gender',
+    //         'email',
+    //         'nationalities',
+    //         'imageDocumentIdentification',
+    //         'isActive'
+    //     ];
+    
+    //     for (const [key, value] of Object.entries(updates)) {
+    //         if (!modifiableFields.includes(key)) {
+    //             throw new Error(`Le champ ${key} ne peut pas être modifié directement.`);
+    //         }
+    
+    //         // Validations...
+    //         switch (key) {
+    //             case 'email':
+    //                 if (!value.includes('@')) {
+    //                     throw new Error('Format d\'email invalide');
+    //                 }
+    //                 break;
+    //             case 'dateOfBirth':
+    //                 if (isNaN(Date.parse(value))) {
+    //                     throw new Error('Format de date invalide');
+    //                 }
+    //                 break;
+    //             case 'gender':
+    //                 if (!['M', 'F'].includes(value)) {
+    //                     throw new Error('Le genre doit être "M" ou "F"');
+    //                 }
+    //                 break;
+    //             case 'isActive':
+    //                 if (typeof value !== 'boolean') {
+    //                     throw new Error('isActive doit être un booléen');
+    //                 }
+    //                 break;
+    //         }
+    
+    //         client[key] = value;
+    //     }
+    
+    //     // Ajouter l'information de modification
+    //     const mspId = ctx.clientIdentity.getMSPID();
+    //     const timestamp = this.getTransactionTimestamp(ctx);
+    //     client.modificationHistory = [
+    //         ...(client.modificationHistory || []),
+    //         {
+    //             mspId: mspId,
+    //             timestamp: timestamp,
+    //             action: 'UPDATE_ATTRIBUTES',
+    //             modifiedFields: Object.keys(updates)
+    //         }
+    //     ];
+    
+    //     await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
+    //     return JSON.stringify(client);
+    // }
+    
     async UpdateClientAttributes(ctx, ubi, changes) {
+        // 1. Vérifier l'existence du client
         const exists = await this.ClientExists(ctx, ubi);
         if (!exists) {
             throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
         }
-
-        // Récupérer le client existant
-        const clientString = await this.ReadClient(ctx, ubi);
-        const client = JSON.parse(clientString);
-
-        // Parser les modifications demandées
-        const updates = JSON.parse(changes);
-
-        // Liste des champs modifiables
+    
+        // 2. Lire l'état actuel du client directement sans passer par ReadClient
+        const clientState = await ctx.stub.getState(ubi);
+        const client = JSON.parse(clientState.toString());
+    
+        // 3. Parser les modifications
+        let updates;
+        try {
+            updates = JSON.parse(changes);
+        } catch (error) {
+            throw new Error(`Format JSON invalide pour les modifications: ${error.message}`);
+        }
+    
+        // 4. Définir les champs modifiables et leurs validations
         const modifiableFields = [
             'firstName',
             'lastName',
             'dateOfBirth',
             'gender',
             'email',
-            'nationality',
+            'nationalities',
             'imageDocumentIdentification',
             'isActive'
         ];
-
-        // Appliquer les modifications
+    
+        // 5. Valider et appliquer les modifications
+        const modifiedFields = [];
         for (const [key, value] of Object.entries(updates)) {
             // Vérifier si le champ est modifiable
             if (!modifiableFields.includes(key)) {
-                throw new Error(`Le champ ${key} ne peut pas être modifié directement. Utilisez les méthodes spécifiques pour modifier les comptes.`);
+                throw new Error(`Le champ ${key} ne peut pas être modifié directement.`);
             }
-
-            // Validation spécifique pour certains champs
+    
+            // Vérifier que la valeur n'est pas null ou undefined
+            if (value === null || value === undefined) {
+                throw new Error(`La valeur pour le champ ${key} ne peut pas être nulle`);
+            }
+    
+            // Validations spécifiques pour chaque champ
             switch (key) {
-                case 'email':
-                    // Validation simple de l'email
-                    if (!value.includes('@')) {
-                        throw new Error('Format d\'email invalide');
+                case 'firstName':
+                case 'lastName':
+                    if (typeof value !== 'string' || value.trim() === '') {
+                        throw new Error(`${key} doit être une chaîne de caractères non vide`);
+                    }
+                    if (value.length < 2 || value.length > 50) {
+                        throw new Error(`${key} doit contenir entre 2 et 50 caractères`);
                     }
                     break;
+    
                 case 'dateOfBirth':
-                    // Vérifier si la date est valide
-                    if (isNaN(Date.parse(value))) {
+                    if (typeof value !== 'string' || isNaN(Date.parse(value))) {
                         throw new Error('Format de date invalide');
                     }
+                    const birthDate = new Date(value);
+                    const today = new Date();
+                    if (birthDate > today) {
+                        throw new Error('La date de naissance ne peut pas être dans le futur');
+                    }
+                    const minDate = new Date();
+                    minDate.setFullYear(minDate.getFullYear() - 120);
+                    if (birthDate < minDate) {
+                        throw new Error('La date de naissance est trop ancienne');
+                    }
                     break;
+    
                 case 'gender':
-                    // Vérifier que le genre est soit 'M' soit 'F'
-                    if (!['M', 'F'].includes(value)) {
+                    if (typeof value !== 'string' || !['M', 'F'].includes(value)) {
                         throw new Error('Le genre doit être "M" ou "F"');
                     }
                     break;
+    
+                case 'email':
+                    if (typeof value !== 'string' || value.trim() === '') {
+                        throw new Error('L\'email ne peut pas être vide');
+                    }
+                    // Expression régulière basique pour la validation d'email
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        throw new Error('Format d\'email invalide');
+                    }
+                    break;
+    
+                case 'nationalities':
+                    if (!Array.isArray(value) || value.length === 0) {
+                        throw new Error('Les nationalités doivent être un tableau non vide');
+                    }
+                    if (!value.every(nat => typeof nat === 'string' && nat.length === 3)) {
+                        throw new Error('Chaque nationalité doit être un code pays de 3 caractères');
+                    }
+                    break;
+    
+                case 'imageDocumentIdentification':
+                    if (typeof value !== 'string' || value.trim() === '') {
+                        throw new Error('L\'image d\'identification ne peut pas être vide');
+                    }
+                    // Vérifier si c'est un format base64 valide
+                    if (!/^[A-Za-z0-9+/=_-]*$/.test(value)) {
+                        throw new Error('L\'image doit être encodée en base64');
+                    }
+                    break;
+    
                 case 'isActive':
-                    // Vérifier que isActive est un booléen
                     if (typeof value !== 'boolean') {
                         throw new Error('isActive doit être un booléen');
                     }
                     break;
             }
-
-            // Appliquer la modification
-            client[key] = value;
+    
+            // Si la validation passe et la valeur est différente, l'ajouter aux champs modifiés
+            if (JSON.stringify(client[key]) !== JSON.stringify(value)) {
+                client[key] = value;
+                modifiedFields.push(key);
+            }
         }
-
-        // Sauvegarder les modifications
-        await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
-
-        // Retourner le client mis à jour
+    
+        // 6. Ne mettre à jour que si des modifications ont été effectuées
+        if (modifiedFields.length > 0) {
+            // Obtenir les informations de la transaction
+            const mspId = ctx.clientIdentity.getMSPID();
+            const timestamp = this.getTransactionTimestamp(ctx);
+    
+            // Ajouter l'historique de modification
+            client.modificationHistory = client.modificationHistory || [];
+            client.modificationHistory.push({
+                action: 'UPDATE_ATTRIBUTES',
+                mspId: mspId,
+                timestamp: timestamp,
+                modifiedFields: modifiedFields.sort() // Trier les champs modifiés
+            });
+    
+            // Trier l'historique complet
+            client.modificationHistory.sort((a, b) => {
+                if (a.timestamp < b.timestamp) return -1;
+                if (a.timestamp > b.timestamp) return 1;
+                // Si les timestamps sont égaux, trier par action
+                if (a.timestamp === b.timestamp) {
+                    return a.action.localeCompare(b.action);
+                }
+                return 0;
+            });
+    
+            // 7. Sauvegarder les modifications
+            const updatedClientBuffer = Buffer.from(JSON.stringify(sortKeysRecursive(client)));
+            await ctx.stub.putState(ubi, updatedClientBuffer);
+    
+            // 8. Émettre un événement pour notifier de la modification
+            const event = {
+                ubi: ubi,
+                action: 'UPDATE_ATTRIBUTES',
+                modifiedFields: modifiedFields,
+                timestamp: timestamp,
+                mspId: mspId
+            };
+            ctx.stub.setEvent('ClientUpdated', Buffer.from(JSON.stringify(event)));
+        }
+    
         return JSON.stringify(client);
     }
 
-    // GetClientHistory retourne l'historique des modifications d'un client
+    async DeactivateClient(ctx, ubi) {
+        // Vérifier l'existence du client
+        const exists = await this.ClientExists(ctx, ubi);
+        if (!exists) {
+            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+        }
+    
+        // Récupérer l'état du client directement
+        const clientState = await ctx.stub.getState(ubi);
+        const client = JSON.parse(clientState.toString());
+    
+        // Vérifier si le client est déjà désactivé
+        if (!client.isActive) {
+            throw new Error(`Le client avec l'UBI ${ubi} est déjà désactivé`);
+        }
+    
+        // Mettre à jour le statut et l'historique
+        const mspId = ctx.clientIdentity.getMSPID();
+        const timestamp = this.getTransactionTimestamp(ctx);
+        
+        client.isActive = false;
+        client.modificationHistory = [
+            ...(client.modificationHistory || []),
+            {
+                mspId: mspId,
+                timestamp: timestamp,
+                action: 'DEACTIVATE'
+            }
+        ];
+    
+        // Sauvegarder les modifications
+        await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
+        return JSON.stringify(client);
+    }
+    
+    async ActivateClient(ctx, ubi) {
+        // Vérifier l'existence du client
+        const exists = await this.ClientExists(ctx, ubi);
+        if (!exists) {
+            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+        }
+    
+        // Récupérer l'état du client directement
+        const clientState = await ctx.stub.getState(ubi);
+        const client = JSON.parse(clientState.toString());
+    
+        // Vérifier si le client est déjà activé
+        if (client.isActive) {
+            throw new Error(`Le client avec l'UBI ${ubi} est déjà activé`);
+        }
+    
+        // Mettre à jour le statut et l'historique
+        const mspId = ctx.clientIdentity.getMSPID();
+        const timestamp = this.getTransactionTimestamp(ctx);
+        
+        client.isActive = true;
+        client.modificationHistory = [
+            ...(client.modificationHistory || []),
+            {
+                mspId: mspId,
+                timestamp: timestamp,
+                action: 'ACTIVATE'
+            }
+        ];
+    
+        // Sauvegarder les modifications
+        await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
+        return JSON.stringify(client);
+    }
+    
+    async AddAccount(ctx, ubi, accountNumber, bankName) {
+        // Vérifier l'existence du client
+        const exists = await this.ClientExists(ctx, ubi);
+        if (!exists) {
+            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+        }
+    
+        // Récupérer l'état du client directement
+        const clientState = await ctx.stub.getState(ubi);
+        const client = JSON.parse(clientState.toString());
+    
+        // Vérifier que le client est actif
+        if (!client.isActive) {
+            throw new Error(`Le client avec l'UBI ${ubi} est désactivé et ne peut pas recevoir de nouveau compte`);
+        }
+    
+        // Vérifier si le compte existe déjà
+        const accountExists = client.accountList.some(
+            account => account.accountNumber === accountNumber && account.bankName === bankName
+        );
+        if (accountExists) {
+            throw new Error(`Le compte ${accountNumber} de la banque ${bankName} existe déjà pour ce client`);
+        }
+    
+        // Valider les paramètres du compte
+        if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim() === '') {
+            throw new Error('Le numéro de compte est invalide');
+        }
+        if (!bankName || typeof bankName !== 'string' || bankName.trim() === '') {
+            throw new Error('Le nom de la banque est invalide');
+        }
+    
+        // Ajouter le compte et mettre à jour l'historique
+        const mspId = ctx.clientIdentity.getMSPID();
+        const timestamp = this.getTransactionTimestamp(ctx);
+        
+        client.accountList.push({
+            accountNumber: accountNumber.trim(),
+            bankName: bankName.trim()
+        });
+    
+        client.modificationHistory = [
+            ...(client.modificationHistory || []),
+            {
+                mspId: mspId,
+                timestamp: timestamp,
+                action: 'ADD_ACCOUNT',
+                details: { 
+                    accountNumber: accountNumber.trim(), 
+                    bankName: bankName.trim() 
+                }
+            }
+        ];
+    
+        // Sauvegarder les modifications
+        await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
+        return JSON.stringify(client);
+    }
+    
+    // Modification de RemoveAccount
+    async RemoveAccount(ctx, ubi, accountNumber) {
+        const clientString = await this.ReadClient(ctx, ubi);
+        const client = JSON.parse(clientString);
+        const mspId = ctx.clientIdentity.getMSPID();
+        
+        client.accountList = client.accountList.filter(account => account.accountNumber !== accountNumber);
+        
+        client.modificationHistory = [
+            ...(client.modificationHistory || []),
+            {
+                mspId: mspId,
+                timestamp: new Date().toISOString(),
+                action: 'REMOVE_ACCOUNT',
+                details: { accountNumber }
+            }
+        ];
+    
+        await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
+        return JSON.stringify(client);
+    }
+    
+    // GetClientHistory modifié pour inclure les informations de modification
     async GetClientHistory(ctx, ubi) {
         try {
             const exists = await this.ClientExists(ctx, ubi);
@@ -320,22 +792,45 @@ class ClientManager extends Contract {
                     break;
                 }
 
-                const modification = {
-                    txId: response.value.tx_id,
-                    timestamp: new Date().toISOString(), // Utilisation de la date actuelle pour le moment
-                    isDelete: Boolean(response.value.is_delete)
-                };
-
-                if (response.value.value) {
-                    const valueJson = response.value.value.toString('utf8');
-                    try {
-                        modification.value = JSON.parse(valueJson);
-                    } catch {
-                        modification.value = valueJson;
-                    }
+                // Gestion sécurisée du timestamp
+                let timestamp = null;
+                if (response.value.timestamp) {
+                    const epochSeconds = response.value.timestamp.seconds ?
+                        parseInt(response.value.timestamp.seconds.toString()) : 0;
+                    const nanos = response.value.timestamp.nanos ?
+                        parseInt(response.value.timestamp.nanos.toString()) : 0;
+                    timestamp = new Date(epochSeconds * 1000 + nanos / 1000000).toISOString();
                 }
 
-                results.push(modification);
+                let valueJson = response.value.value.toString('utf8');
+                let clientData;
+                try {
+                    clientData = JSON.parse(valueJson);
+
+                    // Construire l'entrée d'historique
+                    const historyEntry = {
+                        txId: response.value.tx_id,
+                        timestamp: timestamp || new Date().toISOString(),
+                        isDelete: Boolean(response.value.is_delete),
+                        value: clientData,
+                        // Ajouter les informations de création si disponibles
+                        createdBy: clientData.createdBy || null,
+                        // Trouver la modification correspondante dans l'historique
+                        modificationDetails: clientData.modificationHistory ? 
+                            clientData.modificationHistory[clientData.modificationHistory.length - 1] : null
+                    };
+
+                    results.push(historyEntry);
+                } catch (err) {
+                    console.error('Erreur lors du parsing JSON:', err);
+                    results.push({
+                        txId: response.value.tx_id,
+                        timestamp: timestamp || new Date().toISOString(),
+                        isDelete: Boolean(response.value.is_delete),
+                        value: valueJson,
+                        error: 'Erreur lors du parsing des données'
+                    });
+                }
             }
 
             await iterator.close();
@@ -346,6 +841,7 @@ class ClientManager extends Contract {
         }
     }
 
+    // GetClientHistoryByDateRange modifié
     async GetClientHistoryByDateRange(ctx, ubi, startDate, endDate) {
         try {
             const exists = await this.ClientExists(ctx, ubi);
@@ -360,46 +856,32 @@ class ClientManager extends Contract {
                 throw new Error('Dates invalides');
             }
 
-            const iterator = await ctx.stub.getHistoryForKey(ubi);
-            const results = [];
+            // Lire l'état actuel du client pour accéder à l'historique des modifications
+            const clientString = await this.ReadClient(ctx, ubi);
+            const client = JSON.parse(clientString);
+            const modificationHistory = client.modificationHistory || [];
 
-            while (true) {
-                const response = await iterator.next();
-                if (response.done) {
-                    break;
-                }
+            // Filtrer l'historique des modifications par date
+            const filteredHistory = modificationHistory.filter(mod => {
+                const modDate = new Date(mod.timestamp);
+                return modDate >= start && modDate <= end;
+            });
 
-                const modification = {
-                    txId: response.value.tx_id,
-                    timestamp: new Date().toISOString(),
-                    isDelete: Boolean(response.value.is_delete)
-                };
-
-                const modificationDate = new Date(modification.timestamp);
-                
-                // Filtrer par date
-                if (modificationDate >= start && modificationDate <= end) {
-                    if (response.value.value) {
-                        const valueJson = response.value.value.toString('utf8');
-                        try {
-                            modification.value = JSON.parse(valueJson);
-                        } catch {
-                            modification.value = valueJson;
-                        }
-                    }
-                    results.push(modification);
-                }
-            }
-
-            await iterator.close();
-            return JSON.stringify(results);
+            return JSON.stringify({
+                UBI: ubi,
+                dateRange: {
+                    start: startDate,
+                    end: endDate
+                },
+                modifications: filteredHistory
+            });
         } catch (error) {
             console.error('Erreur dans GetClientHistoryByDateRange:', error);
             throw error;
         }
     }
 
-    // Obtenir l'historique des modifications d'un attribut spécifique
+    // GetClientAttributeHistory modifié
     async GetClientAttributeHistory(ctx, ubi, attributeName) {
         try {
             const exists = await this.ClientExists(ctx, ubi);
@@ -416,19 +898,34 @@ class ClientManager extends Contract {
                     break;
                 }
 
+                let timestamp = null;
+                if (response.value.timestamp) {
+                    const epochSeconds = response.value.timestamp.seconds ?
+                        parseInt(response.value.timestamp.seconds.toString()) : 0;
+                    const nanos = response.value.timestamp.nanos ?
+                        parseInt(response.value.timestamp.nanos.toString()) : 0;
+                    timestamp = new Date(epochSeconds * 1000 + nanos / 1000000).toISOString();
+                }
+
                 if (response.value.value) {
                     const valueJson = response.value.value.toString('utf8');
                     try {
                         const clientData = JSON.parse(valueJson);
                         if (attributeName in clientData) {
-                            results.push({
+                            const historyEntry = {
                                 txId: response.value.tx_id,
-                                timestamp: new Date().toISOString(),
+                                timestamp: timestamp || new Date().toISOString(),
                                 attributeName: attributeName,
-                                value: clientData[attributeName]
-                            });
+                                value: clientData[attributeName],
+                                // Ajouter les informations de modification si disponibles
+                                modificationDetails: clientData.modificationHistory ? 
+                                    clientData.modificationHistory.find(mod => 
+                                        mod.modifiedFields && mod.modifiedFields.includes(attributeName)
+                                    ) : null
+                            };
+                            results.push(historyEntry);
                         }
-                    } catch {
+                    } catch (err) {
                         console.log('Erreur de parsing JSON pour l\'attribut');
                     }
                 }
@@ -442,7 +939,7 @@ class ClientManager extends Contract {
         }
     }
 
-    // Obtenir un résumé des modifications
+    // GetClientHistorySummary modifié
     async GetClientHistorySummary(ctx, ubi) {
         try {
             const exists = await this.ClientExists(ctx, ubi);
@@ -450,50 +947,40 @@ class ClientManager extends Contract {
                 throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
             }
 
-            const iterator = await ctx.stub.getHistoryForKey(ubi);
+            // Lire l'état actuel du client
+            const clientString = await this.ReadClient(ctx, ubi);
+            const client = JSON.parse(clientString);
+
             const summary = {
                 totalModifications: 0,
-                modificationsByAttribute: {},
+                modificationsByType: {},
+                modificationsByOrg: {},
+                createdBy: client.createdBy || null,
                 lastModification: null,
                 creationDate: null
             };
 
-            while (true) {
-                const response = await iterator.next();
-                if (response.done) {
-                    break;
-                }
+            if (client.modificationHistory && Array.isArray(client.modificationHistory)) {
+                summary.totalModifications = client.modificationHistory.length;
+                summary.creationDate = client.createdBy ? client.createdBy.timestamp : null;
+                summary.lastModification = client.modificationHistory[client.modificationHistory.length - 1];
 
-                summary.totalModifications++;
-
-                if (response.value.value) {
-                    const valueJson = response.value.value.toString('utf8');
-                    try {
-                        const clientData = JSON.parse(valueJson);
-                        const timestamp = new Date().toISOString();
-
-                        // Enregistrer la première modification comme date de création
-                        if (!summary.creationDate) {
-                            summary.creationDate = timestamp;
-                        }
-
-                        // Mettre à jour la dernière modification
-                        summary.lastModification = timestamp;
-
-                        // Compter les modifications par attribut
-                        Object.keys(clientData).forEach(attr => {
-                            if (!summary.modificationsByAttribute[attr]) {
-                                summary.modificationsByAttribute[attr] = 0;
-                            }
-                            summary.modificationsByAttribute[attr]++;
-                        });
-                    } catch {
-                        console.log('Erreur de parsing JSON pour le résumé');
+                // Compter les modifications par type d'action
+                client.modificationHistory.forEach(mod => {
+                    // Compter par type d'action
+                    if (!summary.modificationsByType[mod.action]) {
+                        summary.modificationsByType[mod.action] = 0;
                     }
-                }
+                    summary.modificationsByType[mod.action]++;
+
+                    // Compter par organisation
+                    if (!summary.modificationsByOrg[mod.mspId]) {
+                        summary.modificationsByOrg[mod.mspId] = 0;
+                    }
+                    summary.modificationsByOrg[mod.mspId]++;
+                });
             }
 
-            await iterator.close();
             return JSON.stringify(summary);
         } catch (error) {
             console.error('Erreur dans GetClientHistorySummary:', error);

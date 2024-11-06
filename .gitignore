@@ -28,3 +28,7 @@ bceao-blockchain-app/frontend/package-lock.json
 bceao-blockchain-app/node_modules
 
 bceao-blockchain-app/package-lock.json
+
+app-folder.sh
+
+create-project.sh
