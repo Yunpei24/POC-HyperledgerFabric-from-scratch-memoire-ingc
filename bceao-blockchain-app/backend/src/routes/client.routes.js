@@ -4,6 +4,29 @@ const router = express.Router();
 const clientController = require('../controllers/clientController');
 const verifyToken = require('../middleware/auth');
 
+// Middleware pour vérifier la taille et le format de l'image
+const validateImage = (req, res, next) => {
+    if (req.body.imageDocumentIdentification) {
+        // Vérifier le format base64
+        if (!req.body.imageDocumentIdentification.match(/^data:image\/(jpeg|png|jpg);base64,/)) {
+            return res.status(400).json({ 
+                error: 'Format d\'image invalide. Utilisez JPEG, PNG ou JPG en base64' 
+            });
+        }
+
+        // Vérifier la taille (max 2MB)
+        const base64Data = req.body.imageDocumentIdentification.split(',')[1];
+        const sizeInBytes = Buffer.from(base64Data, 'base64').length;
+        if (sizeInBytes > 2 * 1024 * 1024) {
+            return res.status(400).json({ 
+                error: 'Image trop grande. Taille maximale: 2MB' 
+            });
+        }
+    }
+    next();
+};
+
+
 // Protéger toutes les routes avec le middleware d'authentification
 router.use(verifyToken);
 
@@ -15,6 +38,9 @@ router.post('/create', clientController.createClient);
 router.put('/:ubi', clientController.updateClient);
 router.delete('/:ubi', clientController.deactivateClient);
 router.put('/:ubi/activate', clientController.activateClient);
+
+// Route pour l'image
+router.get('/:ubi/image', clientController.getClientImage);
 
 // Routes pour l'historique
 router.get('/:ubi/history', clientController.getClientHistory);

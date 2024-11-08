@@ -132,28 +132,105 @@ class ClientUtils {
     }
 
     static calculateStringSimilarity(str1, str2) {
-        if (str1 === str2) return 1.0;
-        if (str1.length === 0 || str2.length === 0) return 0.0;
-
-        const matrix = Array(str2.length + 1).fill(null)
-            .map(() => Array(str1.length + 1).fill(null));
-
-        for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-        for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
-
-        for (let j = 1; j <= str2.length; j++) {
-            for (let i = 1; i <= str1.length; i++) {
-                const substitutionCost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-                matrix[j][i] = Math.min(
-                    matrix[j][i - 1] + 1,
-                    matrix[j - 1][i] + 1,
-                    matrix[j - 1][i - 1] + substitutionCost
-                );
+        try {
+            // Cas de base : si les chaînes sont identiques
+            if (str1 === str2) {
+                return 1.0;
+            }
+    
+            // Si l'une des chaînes est vide
+            if (str1.length === 0 || str2.length === 0) {
+                return 0.0;
+            }
+    
+            // Convertir en minuscules pour la comparaison
+            const s1 = str1.toLowerCase();
+            const s2 = str2.toLowerCase();
+    
+            // Calcul de la plus longue sous-séquence commune (LCS)
+            const lcs = this.getLongestCommonSubsequence(s1, s2);
+            
+            // Calcul des caractères communs dans l'ordre
+            let commonInOrder = 0;
+            let j = 0;
+            for (let i = 0; i < s1.length && j < s2.length; i++) {
+                if (s1[i] === s2[j]) {
+                    commonInOrder++;
+                    j++;
+                }
+            }
+    
+            // Calcul des caractères à la même position
+            let samePosition = 0;
+            for (let i = 0; i < Math.min(s1.length, s2.length); i++) {
+                if (s1[i] === s2[i]) {
+                    samePosition++;
+                }
+            }
+    
+            // Facteurs de similarité ajustés
+            const lcsScore = lcs.length / Math.max(s1.length, s2.length);
+            const orderScore = commonInOrder / Math.max(s1.length, s2.length);
+            const positionScore = samePosition / Math.max(s1.length, s2.length);
+            
+            // Premier caractère identique donne un bonus
+            const firstCharBonus = s1[0] === s2[0] ? 0.1 : 0;
+    
+            // Calcul du score final avec pondération ajustée
+            const similarityScore = (
+                (lcsScore * 0.4) +         // 40% pour la sous-séquence commune
+                (orderScore * 0.3) +        // 30% pour l'ordre des caractères
+                (positionScore * 0.3) +     // 30% pour les positions identiques
+                firstCharBonus              // Bonus pour première lettre identique
+            );
+    
+            // Ajustement final pour pénaliser plus fortement les différences importantes
+            const finalScore = Math.pow(similarityScore, 1.5);
+            
+            // Arrondir à 2 décimales
+            const roundedScore = Math.round(finalScore * 100) / 100;
+    
+            // Logging des détails du calcul
+            console.log({
+                str1: s1,
+                str2: s2,
+                details: {
+                    lcsLength: lcs.length,
+                    commonInOrder,
+                    samePosition,
+                    lcsScore: Math.round(lcsScore * 100) / 100,
+                    orderScore: Math.round(orderScore * 100) / 100,
+                    positionScore: Math.round(positionScore * 100) / 100,
+                    firstCharBonus,
+                    similarityScore: Math.round(similarityScore * 100) / 100
+                },
+                finalScore: roundedScore
+            });
+    
+            return roundedScore;
+        } catch (error) {
+            console.error('Erreur dans calculateStringSimilarity:', error);
+            return 0.0;
+        }
+    }
+    
+    // Fonction auxiliaire pour calculer la plus longue sous-séquence commune
+    static getLongestCommonSubsequence(s1, s2) {
+        const m = s1.length;
+        const n = s2.length;
+        const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(''));
+        
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                if (s1[i-1] === s2[j-1]) {
+                    dp[i][j] = dp[i-1][j-1] + s1[i-1];
+                } else {
+                    dp[i][j] = dp[i][j-1].length > dp[i-1][j].length ? dp[i][j-1] : dp[i-1][j];
+                }
             }
         }
-
-        const maxLength = Math.max(str1.length, str2.length);
-        return 1 - (matrix[str2.length][str1.length] / maxLength);
+        
+        return dp[m][n];
     }
 
     static validateNationalities(nationalities) {

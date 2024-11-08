@@ -3,7 +3,6 @@ function parseResponse(response) {
         // Si c'est un Buffer ou un Uint8Array
         if (Buffer.isBuffer(response) || response instanceof Uint8Array) {
             const stringData = Buffer.from(response).toString('utf8');
-            console.log('Données converties en string:', stringData);
             return JSON.parse(stringData);
         }
         

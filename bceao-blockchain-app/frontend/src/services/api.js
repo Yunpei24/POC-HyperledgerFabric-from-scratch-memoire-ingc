@@ -33,7 +33,6 @@ export const login = async (credentials) => {
 export const getAllClients = async () => {
     try {
         const response = await api.get('/clients/all');
-        console.log('Réponse getAllClients:', response.data);
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.error || 'Erreur lors de la récupération des clients');
@@ -58,14 +57,37 @@ export const getActiveClients = async () => {
     }
   };
 
-export const createClient = async (clientData) => {
+  export const createClient = async (clientData) => {
     try {
         const response = await api.post('/clients/create', clientData);
+        
+        // Si la réponse contient des similitudes
+        if (response.data && response.data.similitude === true) {
+            return {
+                similitude: true,
+                potentialClient: response.data.potentialClient,
+                similarClients: response.data.similarClients
+            };
+        }
+
+        // Si pas de similitudes, retourner le client créé
         return response.data;
+
     } catch (error) {
+        // Si l'erreur contient des informations de similitude
+        if (error.response?.data?.similitude) {
+            return {
+                similitude: true,
+                potentialClient: error.response.data.potentialClient,
+                similarClients: error.response.data.similarClients
+            };
+        }
+
+        // Sinon, lancer une erreur standard
         throw new Error(error.response?.data?.error || 'Erreur lors de la création du client');
     }
 };
+
 
 export const updateClient = async (ubi, clientData) => {
     try {
@@ -109,6 +131,15 @@ export const addAccountToClient = async (ubi, accountData) => {
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.error || 'Erreur lors de l\'ajout du compte');
+    }
+};
+
+export const removeAccount = async (ubi, accountNumber) => {
+    try {
+        const response = await api.delete(`/clients/${ubi}/accounts/${accountNumber}`);
+        return response.data;
+    } catch (error) {
+        throw error;
     }
 };
 
