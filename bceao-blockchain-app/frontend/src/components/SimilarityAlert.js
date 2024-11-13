@@ -1,10 +1,19 @@
+import { useNavigate } from 'react-router-dom';
+
 const SimilarityAlert = ({ similarities, onClose }) => {
+    const navigate = useNavigate();
+
     if (!similarities || !similarities.similarClients || similarities.similarClients.length === 0) {
         return null;
     }
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('fr-FR');
+    };
+
+    const handleUpdateClient = (ubi) => {
+        onClose();
+        navigate(`/clients/${ubi}/update`);
     };
 
     return (
@@ -46,9 +55,9 @@ const SimilarityAlert = ({ similarities, onClose }) => {
                                         <p><span className="font-semibold">Date de naissance:</span> {formatDate(client.existingClient.dateOfBirth)}</p>
                                         <p><span className="font-semibold">Email:</span> {client.existingClient.email}</p>
                                     </div>
-                                    <div>
+                                    <div className="flex items-end justify-end">
                                         {client.matchDetails && (
-                                            <div>
+                                            <div className="mr-4">
                                                 <p className="font-semibold text-yellow-700">Détails des correspondances:</p>
                                                 <ul className="list-disc list-inside text-sm">
                                                     {client.matchDetails.map((detail, idx) => (
@@ -57,6 +66,12 @@ const SimilarityAlert = ({ similarities, onClose }) => {
                                                 </ul>
                                             </div>
                                         )}
+                                        <button
+                                            onClick={() => handleUpdateClient(client.existingClient.UBI)}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                        >
+                                            Modifier
+                                        </button>
                                     </div>
                                 </div>
                             </div>

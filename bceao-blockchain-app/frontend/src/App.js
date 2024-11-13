@@ -4,12 +4,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import Login from './components/Login';
 import Header from './components/Header';
-import ClientList from './components/ClientList';
+//import ClientList from './components/ClientList';
 import ClientForm from './components/ClientForm';
 import ClientDetails from './components/ClientDetails';
 import { useAuth } from './context/AuthContext';
 import ActiveClientList from './components/ActiveClientList';
 import AllClientsList from './components/AllClientsList';
+import UpdateClient from './components/UpdateClient';
 
 // Composant ProtectedRoute
 function ProtectedRoute({ children }) {
@@ -84,6 +85,18 @@ function App() {
                 </Layout>
               </ProtectedRoute>
             } />
+
+            {/* Route pour mettre à jour un client */}
+            <Route
+              path="/clients/:ubi/update"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UpdateClient />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>

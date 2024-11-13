@@ -371,7 +371,6 @@ class ClientManager extends Contract {
                 'dateOfBirth',
                 'gender',
                 'email',
-                'nationalities',
                 'imageDocumentIdentification',
                 'isActive'
             ];
@@ -598,6 +597,149 @@ class ClientManager extends Contract {
         }
     }
     
+    // Ajouter une nationalité
+    async AddNationality(ctx, ubi, countryName, idType, idNumber) {
+        try {
+            // Vérifier l'existence du client
+            const exists = await this.ClientExists(ctx, ubi);
+            if (!exists) {
+                throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+            }
+
+            // Récupérer l'état du client
+            const clientState = await ctx.stub.getState(ubi);
+            const client = JSON.parse(clientState.toString());
+
+            // Vérifier que le client est actif
+            if (!client.isActive) {
+                throw new Error(`Le client avec l'UBI ${ubi} est désactivé et ne peut pas recevoir de nouvelle nationalité`);
+            }
+
+            // Valider les paramètres
+            if (!countryName || typeof countryName !== 'string' || countryName.trim() === '') {
+                throw new Error('Le nom du pays est invalide');
+            }
+            if (!idType || typeof idType !== 'string' || idType.trim() === '') {
+                throw new Error('Le type de pièce d\'identité est invalide');
+            }
+            if (!idNumber || typeof idNumber !== 'string' || idNumber.trim() === '') {
+                throw new Error('Le numéro de pièce d\'identité est invalide');
+            }
+
+            // Vérifier si la nationalité existe déjà
+            const nationalityExists = client.nationalities && client.nationalities.some(
+                nat => nat.countryName === countryName
+            );
+            if (nationalityExists) {
+                throw new Error(`La nationalité ${countryName} existe déjà pour ce client`);
+            }
+
+            // S'assurer que le tableau des nationalités existe
+            if (!client.nationalities) {
+                client.nationalities = [];
+            }
+
+            // Ajouter la nouvelle nationalité
+            const newNationality = {
+                countryName: countryName.trim(),
+                idDocument: {
+                    type: idType.trim(),
+                    number: idNumber.trim()
+                }
+            };
+
+            client.nationalities.push(newNationality);
+
+            // Mettre à jour l'historique
+            const mspId = ctx.clientIdentity.getMSPID();
+            const timestamp = this.getTransactionTimestamp(ctx);
+
+            client.modificationHistory = [
+                ...(client.modificationHistory || []),
+                {
+                    mspId: mspId,
+                    timestamp: timestamp,
+                    action: 'ADD_NATIONALITY',
+                    details: {
+                        countryName: countryName.trim(),
+                        idType: idType.trim(),
+                        idNumber: idNumber.trim()
+                    }
+                }
+            ];
+
+            // Sauvegarder les modifications
+            await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
+            return JSON.stringify(client);
+
+        } catch (error) {
+            console.error('Erreur dans AddNationality:', error);
+            throw error;
+        }
+    }
+
+    // Supprimer une nationalité
+    async RemoveNationality(ctx, ubi, countryName) {
+        try {
+            // Vérifier l'existence du client
+            const exists = await this.ClientExists(ctx, ubi);
+            if (!exists) {
+                throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+            }
+
+            // Récupérer l'état du client
+            const clientState = await ctx.stub.getState(ubi);
+            const client = JSON.parse(clientState.toString());
+
+            // Vérifier que le client est actif
+            if (!client.isActive) {
+                throw new Error(`Le client avec l'UBI ${ubi} est désactivé et ne peut pas être modifié`);
+            }
+
+            // Valider le pays
+            if (!countryName || typeof countryName !== 'string' || countryName.trim() === '') {
+                throw new Error('Le nom du pays est invalide');
+            }
+
+            // Vérifier si la nationalité existe
+            const nationalityToRemove = client.nationalities && client.nationalities.find(
+                nat => nat.countryName === countryName
+            );
+            if (!nationalityToRemove) {
+                throw new Error(`La nationalité ${countryName} n'existe pas pour ce client`);
+            }
+
+            // Vérifier qu'il restera au moins une nationalité
+            if (client.nationalities.length <= 1) {
+                throw new Error('Impossible de supprimer la dernière nationalité du client');
+            }
+
+            // Supprimer la nationalité
+            client.nationalities = client.nationalities.filter(nat => nat.countryName !== countryName);
+
+            // Mettre à jour l'historique
+            const mspId = ctx.clientIdentity.getMSPID();
+            const timestamp = this.getTransactionTimestamp(ctx);
+
+            client.modificationHistory.push({
+                mspId: mspId,
+                timestamp: timestamp,
+                action: 'REMOVE_NATIONALITY',
+                details: {
+                    countryName: countryName,
+                    removedDocument: nationalityToRemove.idDocument
+                }
+            });
+
+            // Sauvegarder les modifications
+            await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
+            return JSON.stringify(client);
+
+        } catch (error) {
+            console.error('Erreur dans RemoveNationality:', error);
+            throw error;
+        }
+    }
     // GetClientHistory modifié pour inclure les informations de modification
     async GetClientHistory(ctx, ubi) {
         try {

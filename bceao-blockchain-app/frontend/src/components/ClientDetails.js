@@ -3,47 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getClient, deactivateClient, activateClient } from '../services/api';
 import BankAccountManagement from './BankAccountManagement';
-
-// Composant pour l'affichage de l'image avec modal
-const ImagePreview = ({ imageData }) => {
-    const [showModal, setShowModal] = useState(false);
-
-    if (!imageData) return null;
-
-    return (
-        <>
-            {/* Miniature cliquable */}
-            <div className="cursor-pointer" onClick={() => setShowModal(true)}>
-                <img
-                    src={imageData}
-                    alt="Document d'identification"
-                    className="h-40 object-cover rounded-lg border border-gray-200 hover:border-bceao-primary transition-colors"
-                />
-                <p className="text-sm text-gray-500 mt-1">Cliquez pour agrandir</p>
-            </div>
-
-            {/* Modal pour l'image en grand */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-                     onClick={() => setShowModal(false)}>
-                    <div className="relative max-w-4xl w-full bg-white rounded-lg p-2">
-                        <button
-                            onClick={() => setShowModal(false)}
-                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                        >
-                            ×
-                        </button>
-                        <img
-                            src={imageData}
-                            alt="Document d'identification"
-                            className="w-full h-auto rounded-lg"
-                        />
-                    </div>
-                </div>
-            )}
-        </>
-    );
-};
+import NationalityManagement from './NationalitiesManagement';
+import ImagePreview from './common/ImagePreview';
 
 
 function ClientDetails() {
@@ -69,21 +30,11 @@ function ClientDetails() {
         fetchClient();
     }, [ubi]);
 
-    // Nouvelle fonction pour formater les nationalités
-    const formatNationalities = (client) => {
-        if (Array.isArray(client.nationalities) && client.nationalities.length > 0) {
-            return client.nationalities.join(', ');
-        }
-        // Si nationalities n'existe pas ou est vide, on regarde nationality
-        if (client.nationalities) {
-            // Si nationality est un tableau
-            if (Array.isArray(client.nationalities)) {
-                return client.nationalities.join(', ');
-            }
-            // Si nationality est une chaîne
-            return client.nationalities;
-        }
-        return 'Non spécifié';
+    const handleNationalitiesChange = (newNationalities) => {
+        setClient(prevClient => ({
+            ...prevClient,
+            nationalities: newNationalities
+        }));
     };
 
     const handleAccountsChange = (newAccounts) => {
@@ -190,26 +141,30 @@ function ClientDetails() {
                                         {client.gender === 'M' ? 'Masculin' : 'Féminin'}
                                     </p>
                                 </div>
-
-                                <div>
-                                    <h3 className="text-gray-600">Nationalités</h3>
-                                    <p className="font-medium">
-                                        {formatNationalities(client)}
-                                    </p>
-                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Colonne 3 : Image du document */}
-                        <div className="flex flex-col">
-                            <h3 className="text-gray-600 mb-2">Document d'identification</h3>
-                            {client.imageDocumentIdentification ? (
-                                <ImagePreview imageData={client.imageDocumentIdentification} />
-                            ) : (
-                                <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <p className="text-gray-500">Aucun document</p>
-                                </div>
-                            )}
+                    {/* Section des nationalités et document d'identité */}
+                    <div className="border-t border-gray-200 pt-6 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="md:col-span-2">
+                                <NationalityManagement
+                                    clientUBI={client.UBI}
+                                    nationalities={client.nationalities}
+                                    onNationalitiesChange={handleNationalitiesChange}
+                                />
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium text-gray-900">Document d'identification</h3>
+                                {client.imageDocumentIdentification ? (
+                                    <ImagePreview imageData={client.imageDocumentIdentification} />
+                                ) : (
+                                    <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <p className="text-gray-500">Aucun document</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -231,7 +186,7 @@ function ClientDetails() {
                             Retour
                         </Link>
                         <Link
-                            to={`/clients/${ubi}/edit`}
+                            to={`/clients/${client.UBI}/update`}
                             className="px-4 py-2 bg-bceao-secondary text-bceao-primary rounded-md hover:bg-yellow-500"
                         >
                             Modifier

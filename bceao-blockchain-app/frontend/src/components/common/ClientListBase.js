@@ -1,3 +1,4 @@
+//frontend/src/components/common/ClientListBase.js
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ClientHistoryModal from './ClientHistoryModal';  // On va aussi séparer le modal
@@ -78,7 +79,7 @@ export default function ClientListBase({
                     <Link to={`/clients/${client.UBI}`} className="text-[#004A94] hover:text-[#FFB612] mr-3">
                       Voir
                     </Link>
-                    <Link to={`/clients/${client.UBI}/edit`} className="text-green-600 hover:text-green-800 mr-3">
+                    <Link to={`/clients/${client.UBI}/update`} className="text-green-600 hover:text-green-800 mr-3">
                       Modifier
                     </Link>
                     <button

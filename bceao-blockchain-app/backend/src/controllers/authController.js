@@ -9,14 +9,15 @@ const users = {
         password: 'admin123',
         organization: 'Ecobank',
         role: 'admin'
-    },
-    'admin_corisbank': {
-        username: 'admin_corisbank',
-        password: 'admin123',
-        organization: 'Corisbank',
-        role: 'admin'
     }
 };
+// ,
+//     'admin_corisbank': {
+//         username: 'admin_corisbank',
+//         password: 'admin123',
+//         organization: 'Corisbank',
+//         role: 'admin'
+//     }
 
 class AuthController {
     async login(req, res) {

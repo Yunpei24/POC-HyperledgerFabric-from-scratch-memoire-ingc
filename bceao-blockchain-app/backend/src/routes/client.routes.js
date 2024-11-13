@@ -38,6 +38,9 @@ router.post('/create', clientController.createClient);
 router.put('/:ubi', clientController.updateClient);
 router.delete('/:ubi', clientController.deactivateClient);
 router.put('/:ubi/activate', clientController.activateClient);
+router.post('/:ubi/nationalities', clientController.addNationality);
+router.delete('/:ubi/nationalities/:countryName', clientController.removeNationality);
+
 
 // Route pour l'image
 router.get('/:ubi/image', clientController.getClientImage);

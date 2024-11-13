@@ -319,6 +319,69 @@ class ClientController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // Ajouter une nationalité à un client
+    async addNationality(req, res) {
+        try {
+            const { ubi } = req.params;
+            const { countryName, idType, idNumber } = req.body;
+
+            // Validation des données requises
+            if (!countryName || !idType || !idNumber) {
+                return res.status(400).json({ 
+                    error: 'Tous les champs sont requis (countryName, idType, idNumber)' 
+                });
+            }
+
+            const { contract } = await connectToNetwork();
+
+            // Appeler la fonction du chaincode
+            await contract.submitTransaction(
+                'AddNationality',
+                ubi,
+                countryName,
+                idType,
+                idNumber
+            );
+
+            // Récupérer le client mis à jour
+            const updatedClientResult = await contract.evaluateTransaction('ReadClient', ubi);
+            const updatedClient = parseResponse(updatedClientResult);
+
+            res.json(updatedClient);
+        } catch (error) {
+            console.error('Erreur addNationality:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // Supprimer une nationalité
+    async removeNationality(req, res) {
+        try {
+            const { ubi, countryName } = req.params;
+
+            if (!countryName) {
+                return res.status(400).json({
+                    error: 'Le nom du pays est requis'
+                });
+            }
+
+            const { contract } = await connectToNetwork();
+
+            // Appeler la fonction du chaincode
+            await contract.submitTransaction('RemoveNationality', ubi, countryName);
+
+            // Récupérer le client mis à jour
+            const updatedClientResult = await contract.evaluateTransaction('ReadClient', ubi);
+            const updatedClient = parseResponse(updatedClientResult);
+
+            res.json(updatedClient);
+        } catch (error) {
+            console.error('Erreur removeNationality:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
+
 
 module.exports = new ClientController();

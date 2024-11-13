@@ -12,7 +12,9 @@ const ClientHistoryModal = ({ history, onClose }) => {
       'DEACTIVATE': 'Désactivation',
       'ACTIVATE': 'Activation',
       'ADD_ACCOUNT': 'Ajout de compte',
-      'REMOVE_ACCOUNT': 'Suppression de compte'
+      'REMOVE_ACCOUNT': 'Suppression de compte',
+      'ADD_NATIONALITY': 'Ajout d\'une nationalité',
+      'REMOVE_NATIONALITY': 'Suppression d\'une nationalité'
     };
     return labels[action] || action;
   };
@@ -52,8 +54,9 @@ const ClientHistoryModal = ({ history, onClose }) => {
               <div className="mb-4 p-4 bg-white rounded-lg shadow">
                 <div className="flex justify-between items-start">
                   <div>
+                    {console.log("ENTRY", entry)}
                     <p className="text-lg font-semibold text-bceao-primary">
-                      Transaction du {new Date(entry.timestamp).toLocaleString()}
+                      Transaction du {new Date(entry.modificationDetails.timestamp).toLocaleString()}
                     </p>
                     {entry.modificationDetails && (
                       <div className="mt-2">
@@ -106,6 +109,13 @@ const ClientHistoryModal = ({ history, onClose }) => {
                             <p className="font-semibold">Créé par:</p>
                             <p className="ml-2">Organisation: {entry.value.createdBy.mspId}</p>
                             <p className="ml-2">Date: {new Date(entry.value.createdBy.timestamp).toLocaleString()}</p>
+                          </div>
+                        )}
+                        {entry.modificationDetails && (
+                          <div className="mt-4">
+                            <p className="font-semibold">Modifié par:</p>
+                            <p className="ml-2">Organisation: {entry.modificationDetails.mspId}</p>
+                            <p className="ml-2">Date: {new Date(entry.modificationDetails.timestamp).toLocaleString()}</p>
                           </div>
                         )}
                       </div>

@@ -143,6 +143,24 @@ export const removeAccount = async (ubi, accountNumber) => {
     }
 };
 
+export const addNationality = async (ubi, nationalityData) => {
+    try {
+        const response = await api.post(`/clients/${ubi}/nationalities`, nationalityData);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || "Erreur lors de l'ajout de la nationalité");
+    }
+};
+
+export const removeNationality = async (ubi, countryName) => {
+    try {
+        const response = await api.delete(`/clients/${ubi}/nationalities/${countryName}`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Erreur lors de la suppression de la nationalité');
+    }
+};
+
 // Fonctions utilitaires
 export const logout = () => {
     localStorage.removeItem('user');
