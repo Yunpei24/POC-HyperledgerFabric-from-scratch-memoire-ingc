@@ -1,5 +1,5 @@
 // frontend/src/components/AllClientsList.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAllClients, getClientHistory } from '../services/api';
 import ClientListBase from './common/ClientListBase';
 import ClientHistoryModal from './common/ClientHistoryModal';
@@ -52,41 +52,47 @@ export default function AllClientsList() {
         }
     };
 
-    const handleSearch = useCallback(({ ubi, firstName, lastName }) => {
-        let filtered = [...clients];
-
-        // Filtrer par UBI
-        if (ubi) {
-            filtered = filtered.filter(client => 
-                client.UBI.toLowerCase().includes(ubi.toLowerCase())
-            );
+    const handleSearch = ({ type, params, result, error: searchError, searchType }) => {
+        if (searchError) {
+            setError(searchError);
+            return;
         }
-
-        // Filtrer par Nom
-        if (lastName) {
-            filtered = filtered.filter(client => 
-                client.lastName.toLowerCase().includes(lastName.toLowerCase())
-            );
-        }
-
-        // Filtrer par Prénom
-        if (firstName) {
-            filtered = filtered.filter(client => 
-                client.firstName.toLowerCase().includes(firstName.toLowerCase())
-            );
-        }
-
-        setFilteredClients(filtered);
-
-        // Mettre à jour queryInfo avec les résultats filtrés
-        if (queryInfo) {
+    
+        if (type === 'FACE') {
+            setFilteredClients(result || []);
             setQueryInfo(prev => ({
                 ...prev,
-                totalResults: filtered.length
+                totalResults: result?.length || 0,
+                searchType: searchType
+            }));
+        } else if (type === 'TEXT') {
+            let filtered = [...clients];
+            
+            if (params.ubi) {
+                filtered = filtered.filter(client =>
+                    client.UBI.toLowerCase().includes(params.ubi.toLowerCase())
+                );
+            }
+            if (params.lastName) {
+                filtered = filtered.filter(client =>
+                    client.lastName.toLowerCase().includes(params.lastName.toLowerCase())
+                );
+            }
+            if (params.firstName) {
+                filtered = filtered.filter(client =>
+                    client.firstName.toLowerCase().includes(params.firstName.toLowerCase())
+                );
+            }
+    
+            setFilteredClients(filtered);
+            setQueryInfo(prev => ({
+                ...prev,
+                totalResults: filtered.length,
+                searchType: 'Text Search'
             }));
         }
-    }, [clients, queryInfo]);
-
+     };
+    
     const handleShowHistory = async (ubi) => {
         try {
             setHistoryLoading(true);
@@ -104,7 +110,10 @@ export default function AllClientsList() {
         <div className="container mx-auto px-4 py-6">
             <div className="space-y-6">
                 {/* Barre de recherche */}
-                <ClientSearchBar onSearch={handleSearch} />
+                <ClientSearchBar 
+                    onSearch={handleSearch} 
+                    clients={clients} // Passer la liste des clients
+                />
 
                 {/* Liste des clients */}
                 <ClientListBase
@@ -114,6 +123,7 @@ export default function AllClientsList() {
                     loading={loading}
                     error={error}
                     onShowHistory={handleShowHistory}
+                    showSimilarity={queryInfo?.searchType === 'Face Recognition'}
                 />
 
                 {/* Modal d'historique */}

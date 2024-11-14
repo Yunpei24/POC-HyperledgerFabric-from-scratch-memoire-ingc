@@ -3,6 +3,74 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
+const API_AI_URL = 'http://127.0.0.1:5021/api/face-recognition';
+
+// Fonction pour comparer une image avec celle d'un client
+export const compareImages = async (uploadedImage, clientImageUrl) => {
+    try {
+        // Convertir l'URL de l'image client en fichier
+        const clientImageResponse = await fetch(clientImageUrl);
+        const clientImageBlob = await clientImageResponse.blob();
+        const clientImageFile = new File([clientImageBlob], 'clientImage.jpg', { type: 'image/jpeg' });
+
+        const formData = new FormData();
+        formData.append('image1', uploadedImage);
+        formData.append('image2', clientImageFile);
+        
+        const response = await axios.post(API_AI_URL, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+        
+        return response.data;
+    } catch (error) {
+        console.error('Erreur lors de la comparaison:', error);
+        throw new Error('Erreur lors de la comparaison des images');
+    }
+};
+
+// Fonction pour rechercher les clients similaires
+export const searchClientsByFace = async (uploadedImage, clients) => {
+    try {
+        const similarClients = [];
+        console.log("Début de la recherche faciale...");
+
+        // Parcourir tous les clients et comparer leurs images
+        for (const client of clients) {
+            if (client.imageFace) {
+                try {
+                    const { similarity, is_similar } = await compareImages(uploadedImage, client.imageFace);
+                    console.log(`Client ${client.UBI}:`, { similarity, is_similar });
+                    
+                    // N'ajouter le client que si is_similar est true
+                    if (is_similar === true) {  // Comparaison stricte
+                        similarClients.push({
+                            ...client,
+                            similarity: similarity
+                        });
+                        console.log(`Client ${client.UBI} ajouté avec similarité:`, similarity);
+                    } else {
+                        console.log(`Client ${client.UBI} non ajouté car non similaire`);
+                    }
+                } catch (error) {
+                    console.error(`Erreur lors de la comparaison avec le client ${client.UBI}:`, error);
+                    continue;
+                }
+            }
+        }
+
+        console.log("Clients similaires trouvés:", similarClients.length);
+        
+        // Trier les clients par score de similarité décroissant
+        return similarClients.sort((a, b) => b.similarity - a.similarity);
+    } catch (error) {
+        console.error("Erreur globale lors de la recherche:", error);
+        throw new Error('Erreur lors de la recherche des clients similaires');
+    }
+};
+
+
 const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {

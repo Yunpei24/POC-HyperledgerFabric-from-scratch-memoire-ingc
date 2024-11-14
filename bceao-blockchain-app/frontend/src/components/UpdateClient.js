@@ -4,7 +4,7 @@ import { getClient, updateClient } from '../services/api';
 import BankAccountManagement from './BankAccountManagement';
 import NationalityManagement from './NationalitiesManagement';
 import ImageUpload from './common/UploadImage';
-import ImagePreview from './common/ImagePreview';
+import {ImagePreview} from './common/ImagePreview';
 
 function UpdateClient() {
   const { ubi } = useParams();

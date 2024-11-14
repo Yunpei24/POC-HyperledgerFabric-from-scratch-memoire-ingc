@@ -101,18 +101,18 @@ class ClientManager extends Contract {
         }
     }
 
-    async CreateClient(ctx, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageDocumentIdentification) {
+    async CreateClient(ctx, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageDocumentIdentification, imageFace) {
         try {
             // Générer un UBI unique
             const ubi = await ClientUtils.generateUniqueUBI(ctx);
             const mspId = ctx.clientIdentity.getMSPID();
             const timestamp = this.getTransactionTimestamp(ctx);
 
-            const duplicates = await ClientUtils.checkForDuplicates(ctx, firstName, lastName, dateOfBirth, email);
+            const duplicates = await ClientUtils.checkForDuplicates(ctx, firstName, lastName, dateOfBirth, email, imageFace);
 
             let client;
 
-            if (duplicates.length > 0) {
+            if (duplicates.length > 0) { // Le cas où il y a des similitudes
                 // Création du client
                 client = {
                     UBI: ubi,
@@ -124,6 +124,7 @@ class ClientManager extends Contract {
                     accountList: JSON.parse(accountList),
                     nationalities: JSON.parse(nationalities),
                     imageDocumentIdentification: imageDocumentIdentification || '',
+                    imageFace: imageFace || '',
                     isActive: true,
                     docType: 'client',
                     createdBy: {
@@ -155,6 +156,7 @@ class ClientManager extends Contract {
                     accountList: JSON.parse(accountList),
                     nationalities: JSON.parse(nationalities),
                     imageDocumentIdentification: imageDocumentIdentification || '',
+                    imageFace: imageFace || '',
                     isActive: true,
                     docType: 'client',
                     createdBy: {

@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Composant pour le téléchargement d'image
-const ImageUpload = ({ value, onChange }) => {
+const ImageUpload = ({ name, value, onChange }) => {
     const handleImageChange = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -26,7 +26,7 @@ const ImageUpload = ({ value, onChange }) => {
     return (
         <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">
-                Document d'identification
+                { name }
             </label>
             <input
                 type="file"

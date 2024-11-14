@@ -24,7 +24,8 @@ function ClientForm() {
         email: '',
         accountList: [],
         nationalities: [],
-        imageDocumentIdentification: ''
+        imageDocumentIdentification: '',
+        imageFace: '',
     });
 
     const handleAccountsChange = (newAccounts) => {
@@ -58,8 +59,12 @@ function ClientForm() {
         setFormData(prev => ({ ...prev, nationalities: newNationalities }));
     };
 
-    const handleImageChange = (imageData) => {
+    const handleImageDocIdChange = (imageData) => {
         setFormData(prev => ({ ...prev, imageDocumentIdentification: imageData }));
+    };
+
+    const handleImageFaceChange = (imageData) => {
+        setFormData(prev => ({ ...prev, imageFace: imageData }));
     };
 
     const handleSubmit = async (e) => {
@@ -133,6 +138,11 @@ function ClientForm() {
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
+                        <ImageUpload
+                            name={"Face ID"}
+                            value={formData.imageFace}
+                            onChange={handleImageFaceChange}
+                        />
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Prénom
@@ -225,8 +235,9 @@ function ClientForm() {
                     </div>
 
                     <ImageUpload
+                        name={"Document d'identification"}
                         value={formData.imageDocumentIdentification}
-                        onChange={handleImageChange}
+                        onChange={handleImageDocIdChange}
                     />
 
                     <div className="flex justify-end space-x-3 pt-4">

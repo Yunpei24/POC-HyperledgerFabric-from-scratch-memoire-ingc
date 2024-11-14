@@ -60,7 +60,8 @@ class ClientController {
                 email,
                 accountList,
                 nationalities,
-                imageDocumentIdentification
+                imageDocumentIdentification,
+                imageFace
             } = req.body;
     
             // Formatage des données pour le chaincode
@@ -94,7 +95,8 @@ class ClientController {
                 email || '',
                 formattedAccountList,
                 formattedNationalities,
-                imageDocumentIdentification || ''
+                imageDocumentIdentification || '',
+                imageFace || ''
             );
     
             try {

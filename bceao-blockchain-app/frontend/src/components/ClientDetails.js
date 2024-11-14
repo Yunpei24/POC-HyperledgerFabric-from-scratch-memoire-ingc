@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getClient, deactivateClient, activateClient } from '../services/api';
 import BankAccountManagement from './BankAccountManagement';
 import NationalityManagement from './NationalitiesManagement';
-import ImagePreview from './common/ImagePreview';
+import { ImagePreview } from './common/ImagePreview';
 
 
 function ClientDetails() {
@@ -113,6 +113,17 @@ function ClientDetails() {
                                             : 'bg-red-100 text-red-800'}`}>
                                         {client.isActive ? 'Actif' : 'Inactif'}
                                     </p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Photo du Client</h3>
+                                    {client.imageFace ? (
+                                        <ImagePreview imageData={client.imageFace} />
+                                    ) : (
+                                        <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <p className="text-gray-500">Aucune Photo</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
