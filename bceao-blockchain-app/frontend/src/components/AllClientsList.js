@@ -53,45 +53,67 @@ export default function AllClientsList() {
     };
 
     const handleSearch = ({ type, params, result, error: searchError, searchType }) => {
+        // Gestion des erreurs
         if (searchError) {
-            setError(searchError);
-            return;
+          setError(searchError);
+          return;
         }
+    
+        // Réinitialiser l'erreur
+        setError(null);
     
         if (type === 'FACE') {
-            setFilteredClients(result || []);
+          if (!result || result.length === 0) {
+            // Si aucune correspondance faciale, afficher la liste vide avec le message
+            setFilteredClients([]); // ICI: on met une liste vide au lieu de clients
             setQueryInfo(prev => ({
-                ...prev,
-                totalResults: result?.length || 0,
-                searchType: searchType
+              ...prev,
+              totalResults: 0, // ICI: on met 0 au lieu de clients.length
+              searchType: 'Face Recognition',
+              message: "Aucun client similaire trouvé"
             }));
+          } else {
+            setFilteredClients(result);
+            setQueryInfo(prev => ({
+              ...prev,
+              totalResults: result.length,
+              searchType: 'Face Recognition',
+              message: null
+            }));
+          }
         } else if (type === 'TEXT') {
-            let filtered = [...clients];
-            
+          let filtered = [...clients];
+          const hasSearchCriteria = params.ubi || params.lastName || params.firstName;
+    
+          if (hasSearchCriteria) {
             if (params.ubi) {
-                filtered = filtered.filter(client =>
-                    client.UBI.toLowerCase().includes(params.ubi.toLowerCase())
-                );
+              filtered = filtered.filter(client =>
+                client.UBI.toLowerCase().includes(params.ubi.toLowerCase().trim())
+              );
             }
             if (params.lastName) {
-                filtered = filtered.filter(client =>
-                    client.lastName.toLowerCase().includes(params.lastName.toLowerCase())
-                );
+              filtered = filtered.filter(client =>
+                client.lastName.toLowerCase().includes(params.lastName.toLowerCase().trim())
+              );
             }
             if (params.firstName) {
-                filtered = filtered.filter(client =>
-                    client.firstName.toLowerCase().includes(params.firstName.toLowerCase())
-                );
+              filtered = filtered.filter(client =>
+                client.firstName.toLowerCase().includes(params.firstName.toLowerCase().trim())
+              );
             }
+          }
     
-            setFilteredClients(filtered);
-            setQueryInfo(prev => ({
-                ...prev,
-                totalResults: filtered.length,
-                searchType: 'Text Search'
-            }));
+          setFilteredClients(filtered);
+          setQueryInfo(prev => ({
+            ...prev,
+            totalResults: filtered.length,
+            searchType: 'Text Search',
+            message: hasSearchCriteria && filtered.length === 0 ? 
+              "Aucun client ne correspond aux critères de recherche" : 
+              null
+          }));
         }
-     };
+    };
     
     const handleShowHistory = async (ubi) => {
         try {
@@ -117,13 +139,14 @@ export default function AllClientsList() {
 
                 {/* Liste des clients */}
                 <ClientListBase
-                    title="Tous les Clients"
+                    title="Clients Actifs"
                     clients={filteredClients}
                     queryInfo={queryInfo}
                     loading={loading}
                     error={error}
                     onShowHistory={handleShowHistory}
                     showSimilarity={queryInfo?.searchType === 'Face Recognition'}
+                    message={queryInfo?.message} // Ajout du message
                 />
 
                 {/* Modal d'historique */}

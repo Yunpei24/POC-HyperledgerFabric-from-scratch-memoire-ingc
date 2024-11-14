@@ -1,5 +1,7 @@
 // utils/ubiUtils.js
 const axios = require('axios');
+const Buffer = require('buffer').Buffer;
+const FormData = require('form-data');
 
 const UEMOA_COUNTRIES = {
     'BEN': 'Bénin',
@@ -12,7 +14,6 @@ const UEMOA_COUNTRIES = {
     'TGO': 'Togo'
 };
 
-const API_URL = 'http://127.0.0.1:5021/api/face-recognition';
 
 class ClientUtils {
     // Fonction pour générer un UBI unique
@@ -137,140 +138,92 @@ class ClientUtils {
     }
 
     // Fonction pour vérifier les doublons par reconnaissance faciale
-    // static async CheckForDuplicatesByFace(imageFace1, imageFace2) {
-    //     try {
-    //         const formData = new FormData();
-            
-    //         // Si imageFace1 est une URL, la convertir en fichier
-    //         if (typeof imageFace1 === 'string' && imageFace1.startsWith('http')) {
-    //             const response1 = await fetch(imageFace1);
-    //             const blob1 = await response1.blob();
-    //             imageFace1 = new File([blob1], 'image1.jpg', { type: 'image/jpeg' });
-    //         }
-            
-    //         // Si imageFace2 est une URL, la convertir en fichier
-    //         if (typeof imageFace2 === 'string' && imageFace2.startsWith('http')) {
-    //             const response2 = await fetch(imageFace2);
-    //             const blob2 = await response2.blob();
-    //             imageFace2 = new File([blob2], 'image2.jpg', { type: 'image/jpeg' });
-    //         }
-    
-    //         formData.append('image1', imageFace1);
-    //         formData.append('image2', imageFace2);
-    
-    //         const response = await axios.post(API_URL, formData, {
-    //             headers: {
-    //                 'Content-Type': 'multipart/form-data'
-    //             }
-    //         });
-    
-    //         return {
-    //             isSimilar: response.data.is_similar,
-    //             similarity: response.data.similarity
-    //         };
-    //     } catch (error) {
-    //         console.error('Erreur dans CheckForDuplicatesByFace:', error);
-    //         if (error.response?.status === 422) {
-    //             throw new Error("Format d'image invalide ou non supporté");
-    //         } else if (error.response?.status === 400) {
-    //             throw new Error("Aucun visage détecté dans une ou les deux images");
-    //         } else {
-    //             throw new Error("Erreur lors de la comparaison des visages");
-    //         }
-    //     }
-    // }
-
     static async CheckForDuplicatesByFace(imageFace1, imageFace2) {
         try {
-            const formData = new FormData();
+            console.log('Démarrage de la vérification faciale');
             
-            // Fonction utilitaire pour convertir une base64 en Blob
-            const base64ToBlob = async (base64String) => {
-                // Extraire les données base64 pures (enlever le préfixe data:image/...)
-                const base64 = base64String.split(',')[1];
-                const byteCharacters = atob(base64);
-                const byteNumbers = new Array(byteCharacters.length);
-                
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                
-                const byteArray = new Uint8Array(byteNumbers);
-                return new Blob([byteArray], { type: 'image/jpeg' });
-            };
-    
-            // Traiter imageFace1
+            const API_URL = process.env.FACE_API_URL || 'http://172.17.0.1:5021/api/face-recognition';
+            console.log('API URL:', API_URL);
+
+            const formData = new FormData();
+
+            // Conversion des images base64 en Buffer
             if (typeof imageFace1 === 'string') {
                 if (imageFace1.startsWith('data:image')) {
-                    const blob1 = await base64ToBlob(imageFace1);
-                    imageFace1 = new File([blob1], 'image1.jpg', { type: 'image/jpeg' });
+                    const buffer1 = await this.base64ToBuffer(imageFace1);
+                    formData.append('image1', buffer1, {
+                        filename: 'image1.jpg',
+                        contentType: 'image/jpeg'
+                    });
                 } else if (imageFace1.startsWith('http')) {
-                    const response1 = await fetch(imageFace1);
-                    const blob1 = await response1.blob();
-                    imageFace1 = new File([blob1], 'image1.jpg', { type: 'image/jpeg' });
+                    const response1 = await axios.get(imageFace1, { responseType: 'arraybuffer' });
+                    formData.append('image1', response1.data, {
+                        filename: 'image1.jpg',
+                        contentType: 'image/jpeg'
+                    });
                 }
             }
-    
-            // Traiter imageFace2
+
             if (typeof imageFace2 === 'string') {
                 if (imageFace2.startsWith('data:image')) {
-                    const blob2 = await base64ToBlob(imageFace2);
-                    imageFace2 = new File([blob2], 'image2.jpg', { type: 'image/jpeg' });
+                    const buffer2 = await this.base64ToBuffer(imageFace2);
+                    formData.append('image2', buffer2, {
+                        filename: 'image2.jpg',
+                        contentType: 'image/jpeg'
+                    });
                 } else if (imageFace2.startsWith('http')) {
-                    const response2 = await fetch(imageFace2);
-                    const blob2 = await response2.blob();
-                    imageFace2 = new File([blob2], 'image2.jpg', { type: 'image/jpeg' });
+                    const response2 = await axios.get(imageFace2, { responseType: 'arraybuffer' });
+                    formData.append('image2', response2.data, {
+                        filename: 'image2.jpg',
+                        contentType: 'image/jpeg'
+                    });
                 }
             }
-    
-            // Vérification des types
-            if (!(imageFace1 instanceof File) && !(imageFace1 instanceof Blob)) {
-                throw new Error("L'image 1 doit être une URL, une base64 ou un fichier");
-            }
-            if (!(imageFace2 instanceof File) && !(imageFace2 instanceof Blob)) {
-                throw new Error("L'image 2 doit être une URL, une base64 ou un fichier");
-            }
-    
-            formData.append('image1', imageFace1);
-            formData.append('image2', imageFace2);
-    
+
             const response = await axios.post(API_URL, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    }
+                timeout: 10000,
+                maxRetries: 3,
+                retryDelay: 1000,
+                headers: {
+                    ...formData.getHeaders(),
+                },
+                validateStatus: function (status) {
+                    return status >= 200 && status < 500;
                 }
-            );
-    
-            // Vérification de la réponse
-            if (!response.data || typeof response.data.is_similar === 'undefined') {
-                throw new Error("Réponse invalide du serveur");
+            });
+
+            console.log('Réponse API status:', response.status);
+            
+            if (response.status !== 200) {
+                throw new Error(`API a retourné le status ${response.status}`);
             }
-    
+
             return {
                 isSimilar: response.data.is_similar,
                 similarity: response.data.similarity
             };
-    
+
         } catch (error) {
-            console.error('Erreur dans CheckForDuplicatesByFace:', error);
+            console.error('Erreur détaillée dans CheckForDuplicatesByFace:', {
+                message: error.message,
+                code: error.code,
+                response: error.response?.data,
+                config: error.config
+            });
             
-            if (error.response) {
-                switch (error.response.status) {
-                    case 422:
-                        throw new Error("Format d'image invalide ou non supporté");
-                    case 400:
-                        throw new Error("Aucun visage détecté dans une ou les deux images");
-                    case 413:
-                        throw new Error("Images trop volumineuses");
-                    default:
-                        throw new Error(`Erreur serveur: ${error.response.status}`);
-                }
-            } else if (error.request) {
-                throw new Error("Erreur réseau : impossible de contacter le serveur");
-            } else {
-                throw error;
-            }
+            throw new Error(`Erreur lors de la vérification faciale: ${error.message}`);
         }
+    }
+
+    static base64ToBuffer(base64String) {
+        // Extraire la partie base64 pure
+        const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (matches.length !== 3) {
+            throw new Error('Invalid base64 string');
+        }
+
+        const base64 = matches[2];
+        return Buffer.from(base64, 'base64');
     }
 
     // Fonctions utilitaires

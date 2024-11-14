@@ -39,6 +39,7 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
             case 'Carte Nationale d\'Identité':
                 return /^[A-Z0-9]{10,14}$/.test(number);
             case 'Carte de Séjour':
+                return /^[A-Z0-9]{10,14}$/.test(number);
             case 'Carte de Résident':
                 return /^[A-Z0-9]{8,12}$/.test(number);
             default:

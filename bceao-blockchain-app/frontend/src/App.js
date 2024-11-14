@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import Login from './components/Login';
 import Header from './components/Header';
-//import ClientList from './components/ClientList';
 import ClientForm from './components/ClientForm';
 import ClientDetails from './components/ClientDetails';
 import { useAuth } from './context/AuthContext';

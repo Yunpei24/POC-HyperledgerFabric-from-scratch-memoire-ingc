@@ -20,11 +20,21 @@ const ClientHistoryModal = ({ history, onClose }) => {
   };
 
   const formatNationalities = (nationalities) => {
-    if (!nationalities) return 'Non spécifié';
-    if (Array.isArray(nationalities)) {
-      return nationalities.join(', ');
-    }
-    return nationalities;
+    if (!nationalities || !Array.isArray(nationalities)) return 'Non spécifié';
+    return (
+      <div className="ml-4">
+        {nationalities.map((nationality, idx) => (
+          <div key={idx} className="flex gap-2 items-center">
+            <p className="text-sm">
+                {nationality.countryName} :
+            </p>
+            <p>
+                {nationality.idDocument.type} : {nationality.idDocument.number}
+            </p>
+        </div>
+        ))}
+      </div>
+    );
   };
 
   const formatAccounts = (accounts) => {

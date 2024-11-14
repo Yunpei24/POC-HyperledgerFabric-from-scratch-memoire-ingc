@@ -11,6 +11,24 @@ const SimilarityAlert = ({ similarities, onClose }) => {
         return new Date(dateString).toLocaleDateString('fr-FR');
     };
 
+    const formatNationalities = (nationalities) => {
+        if (!nationalities || !Array.isArray(nationalities)) return 'Non spécifié';
+        return (
+          <div className="ml-4">
+            {nationalities.map((nationality, idx) => (
+              <div key={idx} className="flex gap-2 items-center">
+                <p className="text-sm">
+                    {nationality.countryName} :
+                </p>
+                <p>
+                    {nationality.idDocument.type} : {nationality.idDocument.number}
+                </p>
+            </div>
+            ))}
+          </div>
+        );
+    };
+
     const handleUpdateClient = (ubi) => {
         onClose();
         navigate(`/clients/${ubi}/update`);
@@ -31,7 +49,7 @@ const SimilarityAlert = ({ similarities, onClose }) => {
                             <p><span className="font-semibold">Prénom :</span> {similarities.potentialClient.firstName}</p>
                             <p><span className="font-semibold">Date de naissance :</span> {formatDate(similarities.potentialClient.dateOfBirth)}</p>
                             <p><span className="font-semibold">Email :</span> {similarities.potentialClient.email}</p>
-                            <p><span className="font-semibold">Nationalités :</span> {similarities.potentialClient.nationalities.join(', ')}</p>
+                            <p><span className="font-semibold">Nationalités :</span> {formatNationalities(similarities.potentialClient.nationalities)}</p>
                         </div>
                     </div>
 

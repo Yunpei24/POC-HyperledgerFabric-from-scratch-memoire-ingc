@@ -9,9 +9,9 @@
 const stringify = require('json-stringify-deterministic');
 const sortKeysRecursive = require('sort-keys-recursive');
 const { Contract } = require('fabric-contract-api');
-const { ClientIdentity } = require('fabric-shim');
+// const { ClientIdentity } = require('fabric-shim');
 const ClientUtils = require('../utils/clientUtils');
-const ImageUtils = require('../utils/imageUtils');
+// const ImageUtils = require('../utils/imageUtils');
 
 class ClientManager extends Contract {
 
