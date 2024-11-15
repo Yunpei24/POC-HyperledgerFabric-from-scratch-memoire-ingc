@@ -29,10 +29,19 @@ async function connectToNetwork() {
                 credentials: Buffer.from(certificate)
             },
             signer: sign,
-            evaluateOptions: () => ({ deadline: Date.now() + 5000 }),
-            endorseOptions: () => ({ deadline: Date.now() + 15000 }),
-            submitOptions: () => ({ deadline: Date.now() + 5000 }),
-            commitStatusOptions: () => ({ deadline: Date.now() + 60000 }),
+            // Augmentation des timeouts
+            evaluateOptions: () => ({ 
+                deadline: Date.now() + 30000  // 30 secondes
+            }),
+            endorseOptions: () => ({ 
+                deadline: Date.now() + 300000  // 5 minutes pour l'endorsement
+            }),
+            submitOptions: () => ({ 
+                deadline: Date.now() + 60000  // 1 minute
+            }),
+            commitStatusOptions: () => ({ 
+                deadline: Date.now() + 300000  // 5 minutes pour le commit
+            }),
         });
 
         // Se connecter au réseau et au contrat
@@ -104,7 +113,13 @@ async function createGrpcClient() {
             {
                 'grpc.ssl_target_name_override': 'peer0.ecobank.bceao.com',
                 'grpc.max_receive_message_length': -1,
-                'grpc.max_send_message_length': -1
+                'grpc.max_send_message_length': -1,
+                'grpc.max_retry_timeout_millis': 300000,  // 5 minutes
+                'grpc.initial_reconnect_backoff_ms': 1000,
+                'grpc.max_reconnect_backoff_ms': 10000,
+                'grpc.keepalive_timeout_ms': 60000,      // 1 minute
+                'grpc.http2.min_time_between_pings_ms': 30000,
+                'grpc.keepalive_permit_without_calls': 1
             }
         );
     } catch (error) {

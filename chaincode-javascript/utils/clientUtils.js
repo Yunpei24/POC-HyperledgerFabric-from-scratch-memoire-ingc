@@ -181,7 +181,7 @@ class ClientUtils {
             }
 
             const response = await axios.post(API_URL, formData, {
-                timeout: 10000,
+                timeout: 60000,
                 maxRetries: 3,
                 retryDelay: 1000,
                 headers: {

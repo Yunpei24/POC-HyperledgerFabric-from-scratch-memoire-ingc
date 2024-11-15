@@ -51,6 +51,11 @@ services:
       # Ajout pour l'accès à l'API locale
       - CORE_VM_DOCKER_HOSTCONFIG_DNS=8.8.8.8
       - FACE_API_URL=http://172.17.0.1:5021/api/face-recognition
+      # Gestion des Timeout.
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - CORE_PEER_GOSSIP_DIALTIMEOUT=300s
+      - CORE_PEER_GOSSIP_RESPONSETIMEOUT=300s
+      - FABRIC_LOGGING_SPEC=DEBUG
     extra_hosts:
       - "host.docker.internal:172.17.0.1"
     volumes:
@@ -110,6 +115,11 @@ services:
       # Ajout pour l'accès à l'API locale
       - CORE_VM_DOCKER_HOSTCONFIG_DNS=8.8.8.8
       - FACE_API_URL=http://172.17.0.1:5021/api/face-recognition
+      # Gestion des Timeout.
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - CORE_PEER_GOSSIP_DIALTIMEOUT=300s
+      - CORE_PEER_GOSSIP_RESPONSETIMEOUT=300s
+      - FABRIC_LOGGING_SPEC=DEBUG
     extra_hosts:
       - "host.docker.internal:172.17.0.1"
     volumes:

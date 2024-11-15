@@ -125,37 +125,82 @@ export const getActiveClients = async () => {
     }
   };
 
-  export const createClient = async (clientData) => {
-    try {
-        const response = await api.post('/clients/create', clientData);
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// export const createClient = async (clientData) => {
+//     try {
+//         const response = await api.post('/clients/create', clientData);
         
-        // Si la réponse contient des similitudes
-        if (response.data && response.data.similitude === true) {
-            return {
-                similitude: true,
-                potentialClient: response.data.potentialClient,
-                similarClients: response.data.similarClients
-            };
+//         // Si la réponse contient des similitudes
+//         if (response.data && response.data.similitude === true) {
+//             return {
+//                 similitude: true,
+//                 potentialClient: response.data.potentialClient,
+//                 similarClients: response.data.similarClients
+//             };
+//         }
+
+//         // Si pas de similitudes, retourner le client créé
+//         return response.data;
+
+//     } catch (error) {
+//         // Si l'erreur contient des informations de similitude
+//         if (error.response?.data?.similitude) {
+//             return {
+//                 similitude: true,
+//                 potentialClient: error.response.data.potentialClient,
+//                 similarClients: error.response.data.similarClients
+//             };
+//         }
+
+//         // Sinon, lancer une erreur standard
+//         throw new Error(error.response?.data?.error || 'Erreur lors de la création du client');
+//     }
+// };
+
+export const createClient = async (clientData, maxRetries = 3) => {
+    let attempt = 0;
+    
+    while (attempt < maxRetries) {
+        try {
+            const response = await api.post('/clients/create', clientData);
+            
+            // Si la réponse contient des similitudes
+            if (response.data && response.data.similitude === true) {
+                return {
+                    similitude: true,
+                    potentialClient: response.data.potentialClient,
+                    similarClients: response.data.similarClients
+                };
+            }
+            
+            // Si pas de similitudes, retourner le client créé
+            return response.data;
+            
+        } catch (error) {
+            attempt++;
+            
+            // Si c'est une erreur de timeout ou de réseau et qu'il reste des tentatives
+            if ((error.code === 'ECONNABORTED' || error.message.includes('timeout')) && attempt < maxRetries) {
+                console.log(`Tentative ${attempt}/${maxRetries} échouée, nouvelle tentative dans 5 secondes...`);
+                await wait(5000);
+                continue;
+            }
+            
+            // Si l'erreur contient des informations de similitude
+            if (error.response?.data?.similitude) {
+                return {
+                    similitude: true,
+                    potentialClient: error.response.data.potentialClient,
+                    similarClients: error.response.data.similarClients
+                };
+            }
+            
+            // Si c'est la dernière tentative ou une autre erreur
+            throw new Error(error.response?.data?.error || 'Erreur lors de la création du client');
         }
-
-        // Si pas de similitudes, retourner le client créé
-        return response.data;
-
-    } catch (error) {
-        // Si l'erreur contient des informations de similitude
-        if (error.response?.data?.similitude) {
-            return {
-                similitude: true,
-                potentialClient: error.response.data.potentialClient,
-                similarClients: error.response.data.similarClients
-            };
-        }
-
-        // Sinon, lancer une erreur standard
-        throw new Error(error.response?.data?.error || 'Erreur lors de la création du client');
     }
 };
-
 
 export const updateClient = async (ubi, clientData) => {
     try {

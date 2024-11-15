@@ -32,3 +32,13 @@ bceao-blockchain-app/package-lock.json
 app-folder.sh
 
 create-project.sh
+
+explorer/crypto-material
+
+network/channel-artifacts
+
+network/crypto-material
+
+network/system-genesis-block
+
+network/bceaochaincode.tar.gz

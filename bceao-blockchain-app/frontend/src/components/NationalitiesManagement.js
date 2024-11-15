@@ -98,7 +98,7 @@ const NationalityManagement = ({ clientUBI, nationalities, onNationalitiesChange
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-gray-900">Gestion des nationalités</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Gestion des Identités</h3>
                 <span className="text-sm text-gray-500">
                     {nationalities?.length || 0} nationalité(s) enregistrée(s)
                 </span>
