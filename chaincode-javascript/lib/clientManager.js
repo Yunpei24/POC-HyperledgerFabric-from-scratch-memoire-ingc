@@ -101,7 +101,7 @@ class ClientManager extends Contract {
         }
     }
 
-    async CreateClient(ctx, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageDocumentIdentification, imageFace) {
+    async CreateClient(ctx, firstName, lastName, dateOfBirth, gender, email, accountList, nationalities, imageFace) {
         try {
             // Générer un UBI unique
             const ubi = await ClientUtils.generateUniqueUBI(ctx);
@@ -123,7 +123,6 @@ class ClientManager extends Contract {
                     email: email,
                     accountList: JSON.parse(accountList),
                     nationalities: JSON.parse(nationalities),
-                    imageDocumentIdentification: imageDocumentIdentification || '',
                     imageFace: imageFace || '',
                     isActive: true,
                     docType: 'client',
@@ -155,7 +154,6 @@ class ClientManager extends Contract {
                     email: email,
                     accountList: JSON.parse(accountList),
                     nationalities: JSON.parse(nationalities),
-                    imageDocumentIdentification: imageDocumentIdentification || '',
                     imageFace: imageFace || '',
                     isActive: true,
                     docType: 'client',
@@ -600,7 +598,7 @@ class ClientManager extends Contract {
     }
     
     // Ajouter une nationalité
-    async AddNationality(ctx, ubi, countryName, idType, idNumber) {
+    async AddNationality(ctx, ubi, countryName, idType, idNumber, imageDocumentIdentification) {
         try {
             // Vérifier l'existence du client
             const exists = await this.ClientExists(ctx, ubi);
@@ -646,7 +644,8 @@ class ClientManager extends Contract {
                 countryName: countryName.trim(),
                 idDocument: {
                     type: idType.trim(),
-                    number: idNumber.trim()
+                    number: idNumber.trim(),
+                    imageDocumentIdentification: imageDocumentIdentification
                 }
             };
 
@@ -665,7 +664,8 @@ class ClientManager extends Contract {
                     details: {
                         countryName: countryName.trim(),
                         idType: idType.trim(),
-                        idNumber: idNumber.trim()
+                        idNumber: idNumber.trim(),
+                        imageDocumentIdentification: imageDocumentIdentification
                     }
                 }
             ];
@@ -729,7 +729,8 @@ class ClientManager extends Contract {
                 action: 'REMOVE_NATIONALITY',
                 details: {
                     countryName: countryName,
-                    removedDocument: nationalityToRemove.idDocument
+                    removedDocument: nationalityToRemove.idDocument,
+                    imageDocumentIdentification: imageDocumentIdentification
                 }
             });
 

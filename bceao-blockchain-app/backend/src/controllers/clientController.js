@@ -60,7 +60,6 @@ class ClientController {
                 email,
                 accountList,
                 nationalities,
-                imageDocumentIdentification,
                 imageFace
             } = req.body;
     
@@ -95,7 +94,6 @@ class ClientController {
                 email || '',
                 formattedAccountList,
                 formattedNationalities,
-                imageDocumentIdentification || '',
                 imageFace || ''
             );
     
@@ -326,12 +324,13 @@ class ClientController {
     async addNationality(req, res) {
         try {
             const { ubi } = req.params;
-            const { countryName, idType, idNumber } = req.body;
+            const { countryName, idDocument } = req.body;
+            const { type, number, imageDocumentIdentification } = idDocument;
 
             // Validation des données requises
-            if (!countryName || !idType || !idNumber) {
-                return res.status(400).json({ 
-                    error: 'Tous les champs sont requis (countryName, idType, idNumber)' 
+            if (!countryName || !type || !number || !imageDocumentIdentification) {
+                return res.status(400).json({
+                    error: 'Tous les champs sont requis (countryName, idType, idNumber, imageDocumentIdentification)'
                 });
             }
 
@@ -342,8 +341,9 @@ class ClientController {
                 'AddNationality',
                 ubi,
                 countryName,
-                idType,
-                idNumber
+                type,
+                number,
+                imageDocumentIdentification
             );
 
             // Récupérer le client mis à jour

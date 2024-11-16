@@ -3,8 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getClient, updateClient } from '../services/api';
 import BankAccountManagement from './BankAccountManagement';
 import NationalityManagement from './NationalitiesManagement';
-import ImageUpload from './common/UploadImage';
-import {ImagePreview} from './common/ImagePreview';
 
 function UpdateClient() {
   const { ubi } = useParams();
@@ -23,13 +21,6 @@ function UpdateClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Gérer le changement de fichier
-  const handleImageChange = (newImageData) => {
-    setClient((prevClient) => ({
-      ...prevClient,
-      imageDocumentIdentification: newImageData
-    }));
-  };
 
   useEffect(() => {
     const fetchClient = async () => {
@@ -221,15 +212,6 @@ function UpdateClient() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              {/* <div>
-                <ImageUpload
-                  value={client.imageDocumentIdentification}
-                  onChange={handleImageChange}
-                />
-              </div> */}
-            </div>
-
 
             {/* Boutons d'action */}
             <div className="mt-8 flex justify-end space-x-4">
@@ -256,23 +238,13 @@ function UpdateClient() {
               {/* Nationalités et Document d'identification */}
               <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-3">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Nationalités</h3>
                     <NationalityManagement
                       clientUBI={client.UBI}
                       nationalities={client.nationalities}
                       onNationalitiesChange={handleNationalitiesChange}
                     />
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">Document d'identification</h3>
-                    {client.imageDocumentIdentification ? (
-                      <ImagePreview imageData={client.imageDocumentIdentification} />
-                    ) : (
-                      <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <p className="text-gray-500">Aucun document</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

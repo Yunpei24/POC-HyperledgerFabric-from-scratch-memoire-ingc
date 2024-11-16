@@ -24,7 +24,6 @@ function ClientForm() {
         email: '',
         accountList: [],
         nationalities: [],
-        imageDocumentIdentification: '',
         imageFace: '',
     });
 
@@ -59,9 +58,6 @@ function ClientForm() {
         setFormData(prev => ({ ...prev, nationalities: newNationalities }));
     };
 
-    const handleImageDocIdChange = (imageData) => {
-        setFormData(prev => ({ ...prev, imageDocumentIdentification: imageData }));
-    };
 
     const handleImageFaceChange = (imageData) => {
         setFormData(prev => ({ ...prev, imageFace: imageData }));
@@ -217,12 +213,11 @@ function ClientForm() {
                         </div>
                     </div>
 
-                    {/* Section des nationalités avec documents */}
+                    {/* Section des nationalités - Ne plus passer imageDocumentIdentification */}
                     <div className="mt-6">
                         <NationalitySection
                             nationalities={formData.nationalities}
                             onNationalitiesChange={handleNationalitiesChange}
-                            imageDocumentIdentification={formData.imageDocumentIdentification}
                         />
                     </div>
 
@@ -233,12 +228,6 @@ function ClientForm() {
                             onAccountsChange={handleAccountsChange}
                         />
                     </div>
-
-                    <ImageUpload
-                        name={"Document d'identification"}
-                        value={formData.imageDocumentIdentification}
-                        onChange={handleImageDocIdChange}
-                    />
 
                     <div className="flex justify-end space-x-3 pt-4">
                         <button

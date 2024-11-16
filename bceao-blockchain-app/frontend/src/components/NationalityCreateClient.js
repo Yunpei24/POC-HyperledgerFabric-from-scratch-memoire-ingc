@@ -1,5 +1,6 @@
 // components/NationalitySection.js
 import React, { useState } from 'react';
+import ImageUpload from './common/UploadImage';
 
 const ID_TYPES = [
     { id: 'passport', name: 'Passeport' },
@@ -19,12 +20,13 @@ const COUNTRIES = [
     { id: 'gn', name: 'Guinée' },
 ];
 
-const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumentIdentification }) => {
+const NationalitySection = ({ nationalities, onNationalitiesChange }) => {
     const [newNationality, setNewNationality] = useState({
         countryName: '',
         idDocument: {
             type: '',
-            number: ''
+            number: '',
+            imageDocumentIdentification: ''
         }
     });
     const [error, setError] = useState(null);
@@ -47,11 +49,24 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
         }
     };
 
+    const handleImageChange = (imageData) => {
+        setNewNationality(prev => ({
+            ...prev,
+            idDocument: {
+                ...prev.idDocument,
+                imageDocumentIdentification: imageData
+            }
+        }));
+    };
+
     const handleAddNationality = () => {
         setError(null);
 
-        if (!newNationality.countryName || !newNationality.idDocument.type || !newNationality.idDocument.number) {
-            setError('Tous les champs sont requis');
+        if (!newNationality.countryName || 
+            !newNationality.idDocument.type || 
+            !newNationality.idDocument.number ||
+            !newNationality.idDocument.imageDocumentIdentification) {
+            setError('Tous les champs sont requis, y compris le document d\'identification');
             return;
         }
 
@@ -60,13 +75,18 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
             return;
         }
 
-        // Remplacer l'ancienne nationalité au lieu d'ajouter
+        // Ajouter la nouvelle nationalité au tableau
         onNationalitiesChange([newNationality]);
-        setNewNationality({ countryName: '', idDocument: { type: '', number: '' } });
-    };
-
-    const handleRemoveNationality = () => {
-        onNationalitiesChange([]);
+        
+        // Réinitialiser le formulaire
+        setNewNationality({
+            countryName: '',
+            idDocument: {
+                type: '',
+                number: '',
+                imageDocumentIdentification: ''
+            }
+        });
     };
 
     return (
@@ -75,7 +95,6 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
                 <h3 className="font-medium text-gray-700">Nationalité et Document d'Identité</h3>
             </div>
 
-            {/* Affichage de la nationalité existante */}
             {hasExistingNationality ? (
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
@@ -89,19 +108,18 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
                         </div>
                         <button
                             type="button"
-                            onClick={handleRemoveNationality}
+                            onClick={() => onNationalitiesChange([])}
                             className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-200"
                         >
                             Modifier
                         </button>
                     </div>
 
-                    {/* Affichage de l'image du document */}
-                    {imageDocumentIdentification && (
+                    {nationalities[0].idDocument.imageDocumentIdentification && (
                         <div className="mt-4">
                             <h4 className="text-sm font-medium text-gray-700 mb-2">Document fourni</h4>
                             <img
-                                src={imageDocumentIdentification}
+                                src={nationalities[0].idDocument.imageDocumentIdentification}
                                 alt="Document d'identification"
                                 className="max-h-40 object-cover rounded-lg border border-gray-200"
                             />
@@ -109,7 +127,6 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
                     )}
                 </div>
             ) : (
-                // Formulaire d'ajout de nationalité
                 <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                     <div className="grid grid-cols-3 gap-4">
                         <div>
@@ -171,6 +188,14 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
                         </div>
                     </div>
 
+                    <div>
+                        <ImageUpload
+                            name="Document d'identification"
+                            value={newNationality.idDocument.imageDocumentIdentification}
+                            onChange={handleImageChange}
+                        />
+                    </div>
+
                     {error && (
                         <div className="text-red-600 text-sm mt-2">
                             {error}
@@ -180,9 +205,15 @@ const NationalitySection = ({ nationalities, onNationalitiesChange, imageDocumen
                     <button
                         type="button"
                         onClick={handleAddNationality}
-                        disabled={!newNationality.countryName || !newNationality.idDocument.type || !newNationality.idDocument.number}
+                        disabled={!newNationality.countryName || 
+                                !newNationality.idDocument.type || 
+                                !newNationality.idDocument.number ||
+                                !newNationality.idDocument.imageDocumentIdentification}
                         className={`w-full py-2 px-4 rounded-md text-white 
-                            ${(!newNationality.countryName || !newNationality.idDocument.type || !newNationality.idDocument.number) 
+                            ${(!newNationality.countryName || 
+                               !newNationality.idDocument.type || 
+                               !newNationality.idDocument.number ||
+                               !newNationality.idDocument.imageDocumentIdentification)
                                 ? 'bg-gray-300 cursor-not-allowed' 
                                 : 'bg-green-600 hover:bg-green-700'}`}
                     >

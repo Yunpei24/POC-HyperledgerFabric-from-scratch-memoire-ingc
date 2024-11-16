@@ -95,9 +95,8 @@ function ClientDetails() {
                 </div>
 
                 <div className="p-6">
-                    {/* Première section : Information et Image */}
+                    {/* Photo du client et informations de base */}
                     <div className="grid grid-cols-3 gap-6 mb-6">
-                        {/* Colonne 1 et 2 : Informations */}
                         <div className="col-span-2">
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
@@ -113,17 +112,6 @@ function ClientDetails() {
                                             : 'bg-red-100 text-red-800'}`}>
                                         {client.isActive ? 'Actif' : 'Inactif'}
                                     </p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Photo du Client</h3>
-                                    {client.imageFace ? (
-                                        <ImagePreview imageData={client.imageFace} />
-                                    ) : (
-                                        <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <p className="text-gray-500">Aucune Photo</p>
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div>
@@ -154,33 +142,31 @@ function ClientDetails() {
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Section des nationalités et document d'identité */}
-                    <div className="border-t border-gray-200 pt-6 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="md:col-span-2">
-                                <NationalityManagement
-                                    clientUBI={client.UBI}
-                                    nationalities={client.nationalities}
-                                    onNationalitiesChange={handleNationalitiesChange}
-                                />
-                            </div>
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium text-gray-900">Document d'identification</h3>
-                                {client.imageDocumentIdentification ? (
-                                    <ImagePreview imageData={client.imageDocumentIdentification} />
-                                ) : (
-                                    <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <p className="text-gray-500">Aucun document</p>
-                                    </div>
-                                )}
-                            </div>
+                        {/* Photo du client */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-medium text-gray-900">Photo du Client</h3>
+                            {client.imageFace ? (
+                                <ImagePreview imageData={client.imageFace} />
+                            ) : (
+                                <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <p className="text-gray-500">Aucune Photo</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
+                    {/* Section des nationalités */}
+                    <div className="border-t border-gray-200 pt-6">
+                        <NationalityManagement
+                            clientUBI={client.UBI}
+                            nationalities={client.nationalities}
+                            onNationalitiesChange={handleNationalitiesChange}
+                        />
+                    </div>
+
                     {/* Section des comptes bancaires */}
-                    <div className="p-6 border-t border-gray-200">
+                    <div className="border-t border-gray-200 pt-6">
                         <BankAccountManagement
                             clientUBI={client.UBI}
                             accounts={client.accountList}
