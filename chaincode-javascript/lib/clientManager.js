@@ -495,50 +495,54 @@ class ClientManager extends Contract {
     
         // Vérifier que le client est actif
         if (!client.isActive) {
-            throw new Error(`Le client avec l'UBI ${ubi} est désactivé et ne peut pas recevoir de nouveau compte`);
-        }
+            return JSON.stringify({
+                ubi: ubi,
+                message: `Le client avec l'UBI ${ubi} est désactivé et ne peut pas recevoir de nouvelle nationalité`
+            });
+        } else {
     
-        // Vérifier si le compte existe déjà
-        const accountExists = client.accountList.some(
-            account => account.accountNumber === accountNumber && account.bankName === bankName
-        );
-        if (accountExists) {
-            throw new Error(`Le compte ${accountNumber} de la banque ${bankName} existe déjà pour ce client`);
-        }
-    
-        // Valider les paramètres du compte
-        if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim() === '') {
-            throw new Error('Le numéro de compte est invalide');
-        }
-        if (!bankName || typeof bankName !== 'string' || bankName.trim() === '') {
-            throw new Error('Le nom de la banque est invalide');
-        }
-    
-        // Ajouter le compte et mettre à jour l'historique
-        const mspId = ctx.clientIdentity.getMSPID();
-        const timestamp = this.getTransactionTimestamp(ctx);
-        
-        client.accountList.push({
-            accountNumber: accountNumber.trim(),
-            bankName: bankName.trim()
-        });
-    
-        client.modificationHistory = [
-            ...(client.modificationHistory || []),
-            {
-                mspId: mspId,
-                timestamp: timestamp,
-                action: 'ADD_ACCOUNT',
-                details: { 
-                    accountNumber: accountNumber.trim(), 
-                    bankName: bankName.trim() 
-                }
+            // Vérifier si le compte existe déjà
+            const accountExists = client.accountList.some(
+                account => account.accountNumber === accountNumber && account.bankName === bankName
+            );
+            if (accountExists) {
+                throw new Error(`Le compte ${accountNumber} de la banque ${bankName} existe déjà pour ce client`);
             }
-        ];
-    
-        // Sauvegarder les modifications
-        await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
-        return JSON.stringify(client);
+        
+            // Valider les paramètres du compte
+            if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim() === '') {
+                throw new Error('Le numéro de compte est invalide');
+            }
+            if (!bankName || typeof bankName !== 'string' || bankName.trim() === '') {
+                throw new Error('Le nom de la banque est invalide');
+            }
+        
+            // Ajouter le compte et mettre à jour l'historique
+            const mspId = ctx.clientIdentity.getMSPID();
+            const timestamp = this.getTransactionTimestamp(ctx);
+            
+            client.accountList.push({
+                accountNumber: accountNumber.trim(),
+                bankName: bankName.trim()
+            });
+        
+            client.modificationHistory = [
+                ...(client.modificationHistory || []),
+                {
+                    mspId: mspId,
+                    timestamp: timestamp,
+                    action: 'ADD_ACCOUNT',
+                    details: { 
+                        accountNumber: accountNumber.trim(), 
+                        bankName: bankName.trim() 
+                    }
+                }
+            ];
+        
+            // Sauvegarder les modifications
+            await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
+            return JSON.stringify(client);
+        }
     }
     
     // RemoveAccount
@@ -612,67 +616,72 @@ class ClientManager extends Contract {
 
             // Vérifier que le client est actif
             if (!client.isActive) {
-                throw new Error(`Le client avec l'UBI ${ubi} est désactivé et ne peut pas recevoir de nouvelle nationalité`);
-            }
+                // throw new Error(`Le client avec l'UBI ${ubi} est désactivé et ne peut pas recevoir de nouvelle nationalité`);
+                return JSON.stringify({
+                    ubi: ubi,
+                    message: `Le client avec l'UBI ${ubi} est désactivé et ne peut pas recevoir de nouvelle nationalité`
+                });
+            } else {
 
-            // Valider les paramètres
-            if (!countryName || typeof countryName !== 'string' || countryName.trim() === '') {
-                throw new Error('Le nom du pays est invalide');
-            }
-            if (!idType || typeof idType !== 'string' || idType.trim() === '') {
-                throw new Error('Le type de pièce d\'identité est invalide');
-            }
-            if (!idNumber || typeof idNumber !== 'string' || idNumber.trim() === '') {
-                throw new Error('Le numéro de pièce d\'identité est invalide');
-            }
-
-            // Vérifier si la nationalité existe déjà
-            const nationalityExists = client.nationalities && client.nationalities.some(
-                nat => nat.countryName === countryName
-            );
-            if (nationalityExists) {
-                throw new Error(`La nationalité ${countryName} existe déjà pour ce client`);
-            }
-
-            // S'assurer que le tableau des nationalités existe
-            if (!client.nationalities) {
-                client.nationalities = [];
-            }
-
-            // Ajouter la nouvelle nationalité
-            const newNationality = {
-                countryName: countryName.trim(),
-                idDocument: {
-                    type: idType.trim(),
-                    number: idNumber.trim(),
-                    imageDocumentIdentification: imageDocumentIdentification
+                // Valider les paramètres
+                if (!countryName || typeof countryName !== 'string' || countryName.trim() === '') {
+                    throw new Error('Le nom du pays est invalide');
                 }
-            };
+                if (!idType || typeof idType !== 'string' || idType.trim() === '') {
+                    throw new Error('Le type de pièce d\'identité est invalide');
+                }
+                if (!idNumber || typeof idNumber !== 'string' || idNumber.trim() === '') {
+                    throw new Error('Le numéro de pièce d\'identité est invalide');
+                }
 
-            client.nationalities.push(newNationality);
+                // Vérifier si la nationalité existe déjà
+                const nationalityExists = client.nationalities && client.nationalities.some(
+                    nat => nat.countryName === countryName
+                );
+                if (nationalityExists) {
+                    throw new Error(`La nationalité ${countryName} existe déjà pour ce client`);
+                }
 
-            // Mettre à jour l'historique
-            const mspId = ctx.clientIdentity.getMSPID();
-            const timestamp = this.getTransactionTimestamp(ctx);
+                // S'assurer que le tableau des nationalités existe
+                if (!client.nationalities) {
+                    client.nationalities = [];
+                }
 
-            client.modificationHistory = [
-                ...(client.modificationHistory || []),
-                {
-                    mspId: mspId,
-                    timestamp: timestamp,
-                    action: 'ADD_NATIONALITY',
-                    details: {
-                        countryName: countryName.trim(),
-                        idType: idType.trim(),
-                        idNumber: idNumber.trim(),
+                // Ajouter la nouvelle nationalité
+                const newNationality = {
+                    countryName: countryName.trim(),
+                    idDocument: {
+                        type: idType.trim(),
+                        number: idNumber.trim(),
                         imageDocumentIdentification: imageDocumentIdentification
                     }
-                }
-            ];
+                };
 
-            // Sauvegarder les modifications
-            await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
-            return JSON.stringify(client);
+                client.nationalities.push(newNationality);
+
+                // Mettre à jour l'historique
+                const mspId = ctx.clientIdentity.getMSPID();
+                const timestamp = this.getTransactionTimestamp(ctx);
+
+                client.modificationHistory = [
+                    ...(client.modificationHistory || []),
+                    {
+                        mspId: mspId,
+                        timestamp: timestamp,
+                        action: 'ADD_NATIONALITY',
+                        details: {
+                            countryName: countryName.trim(),
+                            idType: idType.trim(),
+                            idNumber: idNumber.trim(),
+                            imageDocumentIdentification: imageDocumentIdentification
+                        }
+                    }
+                ];
+
+                // Sauvegarder les modifications
+                await ctx.stub.putState(ubi, Buffer.from(stringify(sortKeysRecursive(client))));
+                return JSON.stringify(client);
+            }
 
         } catch (error) {
             console.error('Erreur dans AddNationality:', error);

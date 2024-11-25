@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50;
+  }
+}
+
+@layer components {
+  /* Styles pour les boutons */
+  .btn-primary {
+    @apply px-4 py-2 bg-bceao-primary text-white rounded-md 
+           hover:bg-bceao-dark transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bceao-primary;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-bceao-secondary text-bceao-primary rounded-md 
+           hover:bg-yellow-500 transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bceao-secondary;
+  }
+
+  /* Styles pour les inputs */
+  .input-primary {
+    @apply appearance-none rounded relative block w-full px-3 py-2 
+           border border-gray-300 placeholder-gray-500 text-gray-900 
+           focus:outline-none focus:ring-bceao-primary focus:border-bceao-primary 
+           focus:z-10 sm:text-sm;
+  }
+
+  /* Styles pour les headers */
+  .header-primary {
+    @apply bg-bceao-primary text-white shadow-lg;
+  }
+}

@@ -1,0 +1,17 @@
+{
+    "channelName": "bceaochannel",
+    "chaincodeName": "bceaochaincode",
+    "organizations": {
+        "Corisbank": {
+            "mspId": "CorisbankMSP",
+            "peers": [
+                {
+                    "name": "peer0.corisbank.bceao.com",
+                    "url": "localhost:8051"
+                }
+            ]
+        }
+    },
+    "cryptoPath": "../crypto-material",
+    "ordererUrl": "localhost:7050"
+}

@@ -1,0 +1,54 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  body {
+    @apply bg-gray-50;
+    @apply bg-gradient-to-b from-bceao-light-blue via-white to-bceao-gray-light min-h-screen;
+  }
+}
+/* Définition des variables CSS personnalisées */
+:root {
+  --bceao-primary: #004A94;
+  --bceao-secondary: #FFB612;
+  --bceao-light: #F5F5F5;
+  --bceao-dark: #003666;
+  --bceao-marron: #a57b63;
+}
+
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-bceao-primary text-white hover:bg-bceao-dark focus:ring-bceao-primary;
+  }
+
+  .btn-secondary {
+    @apply btn bg-bceao-secondary text-bceao-primary hover:bg-yellow-500 focus:ring-bceao-secondary;
+  }
+
+  .input-field {
+    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm 
+           focus:border-bceao-primary focus:ring-bceao-primary;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  .card {
+    @apply bg-white shadow-lg rounded-lg overflow-hidden;
+  }
+
+  .card-header {
+    @apply px-6 py-4 bg-bceao-primary text-white;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+}

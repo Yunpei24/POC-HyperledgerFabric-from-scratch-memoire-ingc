@@ -73,20 +73,20 @@ class ClientUtils {
 
                     // Email identique
                     if (email.toLowerCase() === record.email.toLowerCase()) {
-                        matchScore += 100;
+                        matchScore += 40;
                         matchDetails.push('Email identique');
                     }
 
                     // Nom et prénom identiques
                     if (this.normalizeString(firstName) === this.normalizeString(record.firstName) &&
                         this.normalizeString(lastName) === this.normalizeString(record.lastName)) {
-                        matchScore += 50;
+                        matchScore += 10;
                         matchDetails.push('Nom et prénom identiques');
                     }
 
                     // Date de naissance identique
                     if (dateOfBirth === record.dateOfBirth) {
-                        matchScore += 30;
+                        matchScore += 5;
                         matchDetails.push('Date de naissance identique');
                     }
 
@@ -101,7 +101,7 @@ class ClientUtils {
                     );
 
                     if (firstNameSimilarity > 0.8 || lastNameSimilarity > 0.8) {
-                        matchScore += 20;
+                        matchScore += 5;
                         matchDetails.push('Noms similaires');
                     }
 
@@ -111,11 +111,11 @@ class ClientUtils {
                     );
 
                     if(faceChecking.isSimilar) {
-                        matchScore += 150;
+                        matchScore += 40;
                         matchDetails.push('Photo très identique');
                     }
 
-                    if (matchScore >= 75) {
+                    if (matchScore >= 50) {
                         duplicates.push({
                             existingClient: {
                                 UBI: record.UBI,

@@ -1,26 +1,34 @@
+# Configuration du réseau Hyperledger Fabric pour le système bancaire UEMOA
+
+# Définition des organisations participantes au réseau
 Organizations:
 
+    # Configuration de l'organisation Orderer (service de commande)
     - &OrdererOrg
-        Name: OrdererOrg
-        ID: OrdererMSP
-        MSPDir: ../crypto-material/ordererOrganizations/bceao.com/msp
+        Name: OrdererOrg        # Nom de l'organisation Orderer
+        ID: OrdererMSP         # Identifiant MSP (Membership Service Provider)
+        MSPDir: ../crypto-material/ordererOrganizations/bceao.com/msp  # Chemin vers les certificats MSP
+        # Définition des politiques d'accès pour l'Orderer
         Policies:
-            Readers:
+            Readers:            # Politique de lecture
                 Type: Signature
                 Rule: "OR('OrdererMSP.member')"
-            Writers:
+            Writers:            # Politique d'écriture
                 Type: Signature
                 Rule: "OR('OrdererMSP.member')"
-            Admins:
+            Admins:             # Politique d'administration
                 Type: Signature
                 Rule: "OR('OrdererMSP.admin')"
+        # Point de terminaison du service Orderer
         OrdererEndpoints:
             - orderer0.bceao.com:7050
 
+    # Configuration de la banque Ecobank
     - &Ecobank
         Name: Ecobank
         ID: EcobankMSP
         MSPDir: ../crypto-material/peerOrganizations/ecobank.bceao.com/msp
+        # Politiques spécifiques à Ecobank
         Policies:
             Readers:
                 Type: Signature
@@ -31,17 +39,20 @@ Organizations:
             Admins:
                 Type: Signature
                 Rule: "OR('EcobankMSP.admin')"
-            Endorsement:
+            Endorsement:        # Politique d'approbation des transactions
                 Type: Signature
                 Rule: "OR('EcobankMSP.member')"
+        # Définition du peer ancre pour Ecobank
         AnchorPeers:
             - Host: peer0.ecobank.bceao.com
               Port: 7051
 
+    # Configuration de la banque Corisbank
     - &Corisbank
         Name: Corisbank
         ID: CorisbankMSP
         MSPDir: ../crypto-material/peerOrganizations/corisbank.bceao.com/msp
+        # Politiques spécifiques à Corisbank
         Policies:
             Readers:
                 Type: Signature
@@ -55,53 +66,61 @@ Organizations:
             Endorsement:
                 Type: Signature
                 Rule: "OR('CorisbankMSP.member')"
+        # Définition du peer ancre pour Corisbank
         AnchorPeers:
             - Host: peer0.corisbank.bceao.com
               Port: 8051
 
+# Définition des capacités du réseau (fonctionnalités activées)
 Capabilities:
     Channel: &ChannelCapabilities
-        V2_0: true
+        V2_0: true            # Utilisation des fonctionnalités de Fabric v2.0 pour les canaux
     Orderer: &OrdererCapabilities
-        V2_0: true
+        V2_0: true            # Fonctionnalités v2.0 pour l'Orderer
     Application: &ApplicationCapabilities
-        V2_0: true
+        V2_0: true            # Fonctionnalités v2.0 pour les applications
 
+# Configuration par défaut des applications
 Application: &ApplicationDefaults
     Organizations:
+    # Politiques par défaut pour les applications
     Policies:
         Readers:
             Type: ImplicitMeta
-            Rule: "ANY Readers"
+            Rule: "ANY Readers"      # Tout lecteur peut lire
         Writers:
             Type: ImplicitMeta
-            Rule: "ANY Writers"
+            Rule: "ANY Writers"      # Tout écrivain peut écrire
         Admins:
             Type: ImplicitMeta
-            Rule: "MAJORITY Admins"
+            Rule: "MAJORITY Admins"  # Majorité des admins requise
         LifecycleEndorsement:
             Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
+            Rule: "MAJORITY Endorsement"  # Majorité requise pour le cycle de vie du chaincode
         Endorsement:
             Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
+            Rule: "MAJORITY Endorsement"  # Majorité requise pour l'approbation
     Capabilities:
         <<: *ApplicationCapabilities
 
+# Configuration par défaut de l'Orderer
 Orderer: &OrdererDefaults
-    OrdererType: etcdraft
+    OrdererType: etcdraft      # Type de consensus utilisé
+    # Configuration du consensus Raft
     EtcdRaft:
         Consenters:
         - Host: orderer0.bceao.com
           Port: 7050
           ClientTLSCert: ../crypto-material/ordererOrganizations/bceao.com/orderers/orderer0.bceao.com/tls/server.crt
           ServerTLSCert: ../crypto-material/ordererOrganizations/bceao.com/orderers/orderer0.bceao.com/tls/server.crt
-    BatchTimeout: 2s
+    # Configuration du traitement des transactions
+    BatchTimeout: 2s           # Temps maximum d'attente avant de créer un bloc
     BatchSize:
-        MaxMessageCount: 10
-        AbsoluteMaxBytes: 99 MB
-        PreferredMaxBytes: 512 KB
+        MaxMessageCount: 10    # Nombre maximum de messages par bloc
+        AbsoluteMaxBytes: 99 MB    # Taille maximale d'un bloc
+        PreferredMaxBytes: 512 KB   # Taille préférée d'un bloc
     Organizations:
+    # Politiques de l'Orderer
     Policies:
         Readers:
             Type: ImplicitMeta
@@ -116,7 +135,9 @@ Orderer: &OrdererDefaults
             Type: ImplicitMeta
             Rule: "ANY Writers"
 
+# Configuration par défaut du canal
 Channel: &ChannelDefaults
+    # Politiques du canal
     Policies:
         Readers:
             Type: ImplicitMeta
@@ -130,7 +151,9 @@ Channel: &ChannelDefaults
     Capabilities:
         <<: *ChannelCapabilities
 
+# Profils de configuration du réseau
 Profiles:
+    # Profil pour la création du bloc de genèse
     ApNetworkProfile:
         <<: *ChannelDefaults
         Orderer:
@@ -139,11 +162,14 @@ Profiles:
                 - *OrdererOrg
             Capabilities:
                 <<: *OrdererCapabilities
+        # Définition du consortium (groupe d'organisations)
         Consortiums:
             ApConsortium:
                 Organizations:
                     - *Ecobank
                     - *Corisbank
+
+    # Profil pour la création du canal
     ApChannelProfile:
         Consortium: ApConsortium
         <<: *ChannelDefaults
