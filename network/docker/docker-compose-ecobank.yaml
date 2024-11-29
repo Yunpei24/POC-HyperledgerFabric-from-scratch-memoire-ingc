@@ -63,6 +63,7 @@ services:
         - /var/run/docker.sock:/host/var/run/docker.sock
         - ../crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer0.ecobank.bceao.com/msp:/etc/hyperledger/fabric/msp
         - ../crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer0.ecobank.bceao.com/tls:/etc/hyperledger/fabric/tls
+        - ../../chaincode-javascript/assets:/usr/local/src
         - peer0.ecobank.bceao.com:/var/hyperledger/production
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
@@ -127,6 +128,7 @@ services:
         - /var/run/docker.sock:/host/var/run/docker.sock
         - ../crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer1.ecobank.bceao.com/msp:/etc/hyperledger/fabric/msp
         - ../crypto-material/peerOrganizations/ecobank.bceao.com/peers/peer1.ecobank.bceao.com/tls:/etc/hyperledger/fabric/tls
+        - ../../chaincode-javascript/assets:/usr/local/src
         - peer1.ecobank.bceao.com:/var/hyperledger/production
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start

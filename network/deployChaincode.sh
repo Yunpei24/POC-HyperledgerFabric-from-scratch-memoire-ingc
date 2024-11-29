@@ -169,11 +169,11 @@ printSeparator "Installing on All Peers"
 
 # Ecobank peers
 installChaincode "Ecobank" "peer0" 7051
-installChaincode "Ecobank" "peer1" 7042
+#installChaincode "Ecobank" "peer1" 7042
 
 # Corisbank peers
 installChaincode "Corisbank" "peer0" 8051
-installChaincode "Corisbank" "peer1" 8042
+#installChaincode "Corisbank" "peer1" 8042
 
 # Approbation par les organisations
 approveChaincodeForOrg "Ecobank" "peer0" 7051

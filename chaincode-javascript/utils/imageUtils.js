@@ -1,53 +1,64 @@
-// utils/imageUtils.js
+// imageUtils.js
+const fs = require('fs').promises;
+const path = require('path');
+const mime = require('mime-types');
 
-class ImageUtils {
-    static validateImage(imageData) {
-        try {
-            // Vérifier si l'image est en base64
-            if (!imageData.match(/^data:image\/(jpeg|png|jpg);base64,/)) {
-                throw new Error('Format d\'image invalide. L\'image doit être en base64 (JPEG, PNG ou JPG)');
+async function loadImages(faceImagesDir, docImagesDir, numberOfClients) {
+    const imagesData = {
+        faces: {},
+        documents: {}
+    };
+
+    try {
+        // Charger les images des visages
+        for (let i = 1; i <= numberOfClients; i++) {
+            try {
+                const extensions = ['.jpg', '.jpeg', '.png'];
+                let faceImagePath = null;
+                let faceImageType = null;
+
+                // Chercher la première extension valide
+                for (const ext of extensions) {
+                    const testPath = path.join(faceImagesDir, `faceID_${i}${ext}`);
+                    try {
+                        await fs.access(testPath);
+                        faceImagePath = testPath;
+                        faceImageType = mime.lookup(ext);
+                        break;
+                    } catch (err) {
+                        continue;
+                    }
+                }
+
+                if (faceImagePath) {
+                    const imageBuffer = await fs.readFile(faceImagePath);
+                    imagesData.faces[i] = `data:${faceImageType};base64,${imageBuffer.toString('base64')}`;
+                }
+
+                // Charger les images des documents (jusqu'à 2 par client)
+                imagesData.documents[i] = {};
+                for (let j = 1; j <= 2; j++) {
+                    for (const ext of extensions) {
+                        const testPath = path.join(docImagesDir, `docImage_${j}${ext}`);
+                        try {
+                            await fs.access(testPath);
+                            const imageBuffer = await fs.readFile(testPath);
+                            imagesData.documents[i][j] = `data:${mime.lookup(ext)};base64,${imageBuffer.toString('base64')}`;
+                            break;
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn(`Erreur lors du chargement des images pour le client ${i}:`, error);
             }
-
-            // Extraire les données base64 réelles
-            const base64Data = imageData.split(',')[1];
-
-            // Vérifier la taille de l'image (max 2MB)
-            const sizeInBytes = Buffer.from(base64Data, 'base64').length;
-            const maxSize = 2 * 1024 * 1024; // 2MB
-            if (sizeInBytes > maxSize) {
-                throw new Error('L\'image est trop grande. Taille maximale: 2MB');
-            }
-
-            return true;
-        } catch (error) {
-            throw new Error(`Erreur de validation d'image: ${error.message}`);
         }
-    }
-
-    static async processImage(imageData) {
-        try {
-            // Extraire le type MIME et les données
-            const matches = imageData.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
-            if (!matches) {
-                throw new Error('Format d\'image invalide');
-            }
-
-            const imageType = matches[1];
-            const base64Data = matches[2];
-
-            // Créer un objet avec les métadonnées
-            const imageObject = {
-                type: imageType,
-                data: base64Data,
-                uploadedAt: new Date().toISOString(),
-                size: Buffer.from(base64Data, 'base64').length
-            };
-
-            return imageObject;
-        } catch (error) {
-            throw new Error(`Erreur de traitement d'image: ${error.message}`);
-        }
+        return imagesData;
+    } catch (error) {
+        console.error('Erreur lors du chargement des images:', error);
+        throw error;
     }
 }
 
-module.exports = ImageUtils;
+module.exports = { loadImages };

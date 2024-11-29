@@ -11,7 +11,9 @@ const sortKeysRecursive = require('sort-keys-recursive');
 const { Contract } = require('fabric-contract-api');
 // const { ClientIdentity } = require('fabric-shim');
 const ClientUtils = require('../utils/clientUtils');
-// const ImageUtils = require('../utils/imageUtils');
+const { generateTestClientsData } = require('../utils/testDataGenerator');
+const { loadImages } = require('../utils/imageUtils');
+const path = require('path');
 
 class ClientManager extends Contract {
 
@@ -31,43 +33,28 @@ class ClientManager extends Contract {
         try {
             const mspId = ctx.clientIdentity.getMSPID();
             const timestamp = this.getTransactionTimestamp(ctx);
-    
-            // Définition des clients sans UBI préalable
-            const clientsData = [
-                {
-                    firstName: 'Thomas',
-                    lastName: 'Martin',
-                    dateOfBirth: '1985-03-15',
-                    gender: 'M',
-                    email: 'thomas.martin@email.com',
-                    accountList: [
-                        { accountNumber: 'ACC001', bankName: 'BankA' }
-                    ],
-                    nationalities: ['SEN'],
-                    imageDocumentIdentification: 'base64_encoded_image_1'
-                },
-                {
-                    firstName: 'Marie',
-                    lastName: 'Dubois',
-                    dateOfBirth: '1990-07-22',
-                    gender: 'F',
-                    email: 'marie.dubois@email.com',
-                    accountList: [
-                        { accountNumber: 'ACC002', bankName: 'BankB' }
-                    ],
-                    nationalities: ['CIV'],
-                    imageDocumentIdentification: 'base64_encoded_image_2'
-                }
-            ];
+            
+            // Chemins vers les dossiers d'images (à ajuster selon votre structure)
+            const faceImagesDir = path.join(__dirname, '../assets/faces');
+            const docImagesDir = path.join(__dirname, '../assets/documents');
+            
+            // Chargement des images
+            const imagesData = await loadImages(faceImagesDir, docImagesDir, 21);
+
+            console.log('Génération des données de test...');
+            // Génération des données
+            const clientsData = generateTestClientsData(imagesData);
+
+            console.log(`Début de l'initialisation du ledger avec ${clientsData.length} clients...`);
     
             // Créer les clients avec des UBI générés automatiquement
             for (const clientData of clientsData) {
                 // Générer un UBI unique pour chaque client
-                const ubi = await ClientUtils.generateUniqueUBI(ctx);
+                //const ubi = await ClientUtils.generateUniqueUBI(ctx);
                 
-                // Construire l'objet client complet
+                // Construction de l'objet client complet
                 const client = {
-                    UBI: ubi,
+                    UBI: clientData.ubi,
                     firstName: clientData.firstName,
                     lastName: clientData.lastName,
                     dateOfBirth: clientData.dateOfBirth,
@@ -75,7 +62,7 @@ class ClientManager extends Contract {
                     email: clientData.email,
                     accountList: clientData.accountList,
                     nationalities: clientData.nationalities,
-                    imageDocumentIdentification: clientData.imageDocumentIdentification,
+                    imageFace: clientData.imageFace,
                     isActive: true,
                     docType: 'client',
                     createdBy: {
@@ -95,6 +82,7 @@ class ClientManager extends Contract {
             }
     
             console.log('Initialisation du ledger terminée avec succès');
+            return `${clientsData.length} clients ont été initialisés avec succès`;
         } catch (error) {
             console.error('Erreur dans InitLedger:', error);
             throw error;
