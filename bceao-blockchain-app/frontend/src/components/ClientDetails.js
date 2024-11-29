@@ -1,11 +1,20 @@
-// frontend/src/components/ClientDetails.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getClient, deactivateClient, activateClient } from '../services/api';
 import BankAccountManagement from './BankAccountManagement';
 import NationalityManagement from './NationalitiesManagement';
 import { ImagePreview } from './common/ImagePreview';
+import { useAuth } from '../context/AuthContext';
 
+const AVAILABLE_BANKS = [
+    { id: 'ecobank', name: 'Ecobank' },
+    { id: 'corisbank', name: 'Corisbank' },
+    { id: 'boa', name: 'Bank Of Africa' },
+    { id: 'sgbf', name: 'Société Générale' },
+    { id: 'bcb', name: 'Banque Commerciale du Burkina' },
+    { id: 'ubabank', name: 'UBA Bank' },
+    { id: 'biciab', name: 'BICIAB' },
+];
 
 function ClientDetails() {
     const { ubi } = useParams();
@@ -13,6 +22,37 @@ function ClientDetails() {
     const [client, setClient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { user } = useAuth();
+
+    // Extraire l'ID de la banque à partir du rôle utilisateur
+    const getUserBankId = () => {
+        if (!user || !user.username) return null;
+        
+        const bankPrefix = 'admin_';
+        const username = user.username.toLowerCase();
+        
+        if (username.startsWith(bankPrefix)) {
+            return username.substring(bankPrefix.length);
+        }
+        return null;
+    };
+
+    // Filtrer les comptes bancaires en fonction de la banque de l'utilisateur
+    const filterAccountsByUserBank = (accounts) => {
+        if (!Array.isArray(accounts)) return [];
+        
+        const userBankId = getUserBankId();
+        if (!userBankId) return accounts;
+
+        const userBank = AVAILABLE_BANKS.find(bank => bank.id === userBankId);
+        if (!userBank) return accounts;
+
+        return accounts.filter(account => 
+            account.bankName && 
+            account.bankName.toLowerCase() === userBank.name.toLowerCase()
+        );
+    };
+
 
     useEffect(() => {
         const fetchClient = async () => {
@@ -86,6 +126,9 @@ function ClientDetails() {
     if (!client) {
         return <div>Client non trouvé</div>;
     }
+
+    // Filtrer les comptes avant de les passer au composant BankAccountManagement
+    const filteredAccounts = filterAccountsByUserBank(client.accountList);
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -169,7 +212,7 @@ function ClientDetails() {
                     <div className="border-t border-gray-200 pt-6">
                         <BankAccountManagement
                             clientUBI={client.UBI}
-                            accounts={client.accountList}
+                            accounts={filteredAccounts}
                             onAccountsChange={handleAccountsChange}
                         />
                     </div>

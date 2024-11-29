@@ -110,10 +110,10 @@ const ClientHistoryModal = ({ history, onClose }) => {
                             {entry.value.isActive ? 'Actif' : 'Inactif'}
                           </span>
                         </p>
-                        <div>
+                        {/* <div>
                           <span className="font-semibold">Comptes bancaires:</span>
                           {formatAccounts(entry.value.accountList)}
-                        </div>
+                        </div> */}
                         {entry.value.createdBy && (
                           <div className="mt-4">
                             <p className="font-semibold">Créé par:</p>
