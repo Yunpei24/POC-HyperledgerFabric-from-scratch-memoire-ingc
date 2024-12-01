@@ -49,7 +49,7 @@ async function connectToNetwork() {
         const network = gateway.getNetwork(constants.CHANNEL_NAME);
         console.log('Connexion au chaincode:', constants.CHAINCODE_NAME);
         const contract = network.getContract(constants.CHAINCODE_NAME);
-
+        
         console.log('Connexion réussie !');
         return { gateway, contract };
     } catch (error) {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 // Liste des banques disponibles
 const AVAILABLE_BANKS = [
@@ -14,10 +15,37 @@ const AVAILABLE_BANKS = [
 const BankAccountsSection = ({ accounts, onAccountsChange }) => {
     const [newAccount, setNewAccount] = useState({ accountNumber: '', bankName: '' });
     const [error, setError] = useState(null);
+    const { user } = useAuth();
+
+    // Détermine la banque de l'utilisateur connecté
+    // Mémoriser la fonction getUserBank
+    const getUserBank = useCallback(() => {
+        if (!user?.username) return null;
+        
+        const bankPrefix = 'admin_';
+        const username = user.username.toLowerCase();
+        
+        if (username.startsWith(bankPrefix)) {
+            const bankId = username.substring(bankPrefix.length);
+            return AVAILABLE_BANKS.find(banque => banque.id === bankId);
+        }
+        return null;
+    }, [user]); // Dépendance à user uniquement
+
+
+    // Définir automatiquement la banque de l'utilisateur au chargement
+    useEffect(() => {
+        const bank = getUserBank();
+        if (bank) {
+            setNewAccount(prev => ({ ...prev, bankName: bank.name }));
+        }
+    }, [getUserBank]); // getUserBank est maintenant stable grâce à useCallback
+
 
     // Vérifie si un compte existe déjà
     const hasExistingAccount = accounts && accounts.length > 0;
 
+    // Gestion de l'ajout d'un compte
     const handleAddAccount = () => {
         setError(null);
 
@@ -26,30 +54,46 @@ const BankAccountsSection = ({ accounts, onAccountsChange }) => {
             return;
         }
 
-        // Vérification du format du numéro de compte
-        if (newAccount.bankName === 'Ecobank' && !newAccount.accountNumber.startsWith('ECO')) {
-            setError('Le numéro de compte Ecobank doit commencer par "ECO"');
+        // Vérification du format du numéro de compte selon la banque
+        const userBank = getUserBank();
+        if (!userBank) {
+            setError('Utilisateur non autorisé');
             return;
         }
 
-        if (newAccount.bankName === 'Corisbank' && !newAccount.accountNumber.startsWith('COR')) {
-            setError('Le numéro de compte Corisbank doit commencer par "COR"');
+        const accountPrefix = userBank.id.toUpperCase().slice(0, 3);
+        if (!newAccount.accountNumber.startsWith(accountPrefix)) {
+            setError(`Le numéro de compte ${userBank.name} doit commencer par "${accountPrefix}"`);
             return;
         }
 
-        onAccountsChange([newAccount]); // Remplace l'ancien compte s'il existe
-        setNewAccount({ accountNumber: '', bankName: '' });
+        if (newAccount.accountNumber.length < 8) {
+            setError('Le numéro de compte doit contenir au moins 8 caractères');
+            return;
+        }
+
+        // Ajout du compte
+        onAccountsChange([{
+            accountNumber: newAccount.accountNumber.trim(),
+            bankName: newAccount.bankName.trim()
+        }]);
+        
+        // Réinitialisation du formulaire
+        setNewAccount(prev => ({ ...prev, accountNumber: '' }));
     };
 
+    // Suppression d'un compte
     const handleRemoveAccount = () => {
         onAccountsChange([]);
     };
+
+    // Récupération de la banque de l'utilisateur connecté
+    const userBank = getUserBank();
 
     return (
         <div className="space-y-4">
             <h3 className="font-medium text-gray-700">Compte Bancaire</h3>
             
-            {/* Message si un compte existe déjà */}
             {hasExistingAccount ? (
                 <div className="space-y-2">
                     {accounts.map((account, index) => (
@@ -69,25 +113,27 @@ const BankAccountsSection = ({ accounts, onAccountsChange }) => {
                     ))}
                 </div>
             ) : (
-                // Formulaire d'ajout de compte
                 <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Banque
                             </label>
-                            <select
-                                value={newAccount.bankName}
-                                onChange={(e) => setNewAccount(prev => ({ ...prev, bankName: e.target.value }))}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-bceao-primary focus:ring-bceao-primary"
-                            >
-                                <option value="">Sélectionner une banque</option>
-                                {AVAILABLE_BANKS.map(bank => (
-                                    <option key={bank.id} value={bank.name}>
-                                        {bank.name}
-                                    </option>
-                                ))}
-                            </select>
+                            {userBank ? (
+                                <input
+                                    type="text"
+                                    value={userBank.name}
+                                    readOnly
+                                    className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50"
+                                />
+                            ) : (
+                                <select
+                                    disabled
+                                    className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50"
+                                >
+                                    <option value="">Non autorisé</option>
+                                </select>
+                            )}
                         </div>
 
                         <div>
@@ -101,9 +147,9 @@ const BankAccountsSection = ({ accounts, onAccountsChange }) => {
                                     ...prev, 
                                     accountNumber: e.target.value.toUpperCase()
                                 }))}
-                                placeholder={newAccount.bankName === 'Ecobank' ? 'ECOxxxx' : 
-                                          newAccount.bankName === 'Corisbank' ? 'CORxxxx' : 'Numéro de compte'}
+                                placeholder={userBank ? `${userBank.id.toUpperCase().slice(0, 3)}XXXXX` : 'Non autorisé'}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-bceao-primary focus:ring-bceao-primary"
+                                disabled={!userBank}
                             />
                         </div>
                     </div>
@@ -117,9 +163,9 @@ const BankAccountsSection = ({ accounts, onAccountsChange }) => {
                     <button
                         type="button"
                         onClick={handleAddAccount}
-                        disabled={!newAccount.accountNumber || !newAccount.bankName}
+                        disabled={!userBank || !newAccount.accountNumber}
                         className={`w-full py-2 px-4 rounded-md text-white 
-                            ${(!newAccount.accountNumber || !newAccount.bankName) 
+                            ${(!userBank || !newAccount.accountNumber)
                                 ? 'bg-gray-300 cursor-not-allowed' 
                                 : 'bg-green-600 hover:bg-green-700'}`}
                     >

@@ -1,6 +1,7 @@
 // components/BankAccountManagement.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { addAccountToClient, removeAccount } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const BANQUES = [
   { id: 'ecobank', name: 'Ecobank' },
@@ -16,6 +17,31 @@ const BankAccountManagement = ({ clientUBI, accounts, onAccountsChange }) => {
     const [newAccount, setNewAccount] = useState({ accountNumber: '', bankName: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const { user } = useAuth();
+
+    // Obtenir la banque de l'utilisateur connecté
+    const getUserBank = () => {
+        if (!user?.username) return null;
+        
+        const bankPrefix = 'admin_';
+        const username = user.username.toLowerCase();
+        
+        if (username.startsWith(bankPrefix)) {
+            const bankId = username.substring(bankPrefix.length);
+            return BANQUES.find(banque => banque.id === bankId);
+        }
+        return null;
+    };
+
+    // Filtrer la liste des banques pour n'afficher que celle de l'utilisateur
+    const userBank = getUserBank();
+
+    // Définir automatiquement la banque de l'utilisateur au chargement
+    useEffect(() => {
+        if (userBank) {
+            setNewAccount(prev => ({ ...prev, bankName: userBank.name }));
+        }
+    }, [userBank]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -88,7 +114,7 @@ const BankAccountManagement = ({ clientUBI, accounts, onAccountsChange }) => {
                     {accounts?.length || 0} compte(s) enregistré(s)
                 </span>
             </div>
-
+     
             {/* Liste des comptes existants */}
             <div className="bg-gray-50 rounded-lg p-6">
                 <h4 className="text-lg font-medium text-gray-800 mb-4">Comptes actuels</h4>
@@ -120,7 +146,7 @@ const BankAccountManagement = ({ clientUBI, accounts, onAccountsChange }) => {
                     </div>
                 )}
             </div>
-
+     
             {/* Formulaire d'ajout de compte */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
                 <h4 className="text-lg font-medium text-gray-800 mb-6">Ajouter un nouveau compte</h4>
@@ -130,21 +156,26 @@ const BankAccountManagement = ({ clientUBI, accounts, onAccountsChange }) => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Banque
                             </label>
-                            <select
-                                name="bankName"
-                                value={newAccount.bankName}
-                                onChange={handleInputChange}
-                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                required
-                            >
-                                <option value="">Sélectionner une banque</option>
-                                {BANQUES.map(banque => (
-                                    <option key={banque.id} value={banque.name}>
-                                        {banque.name}
-                                    </option>
-                                ))}
-                            </select>
+                            {userBank ? (
+                                <input
+                                    type="text"
+                                    value={userBank.name}
+                                    disabled
+                                    className="w-full rounded-lg border-gray-300 bg-gray-100 cursor-not-allowed"
+                                />
+                            ) : (
+                                <select
+                                    name="bankName"
+                                    value={newAccount.bankName}
+                                    onChange={handleInputChange}
+                                    className="w-full rounded-lg border-gray-300"
+                                    disabled
+                                >
+                                    <option value="">Non autorisé</option>
+                                </select>
+                            )}
                         </div>
+     
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Numéro de compte
@@ -154,35 +185,43 @@ const BankAccountManagement = ({ clientUBI, accounts, onAccountsChange }) => {
                                 name="accountNumber"
                                 value={newAccount.accountNumber}
                                 onChange={handleInputChange}
-                                placeholder="Ex: BF123456789"
+                                placeholder={userBank ? `${userBank.id.toUpperCase().slice(0, 3)}XXXXX` : 'Non autorisé'}
                                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 required
                                 minLength={8}
                             />
+                            <p className="mt-1 text-sm text-gray-500">
+                                Le numéro doit commencer par {userBank ? `${userBank.id.toUpperCase().slice(0, 3)}` : '---'} et contenir au moins 8 caractères
+                            </p>
                         </div>
                     </div>
-
+     
                     {error && (
                         <div className="bg-red-50 border-l-4 border-red-500 p-4">
                             <p className="text-red-700">{error}</p>
                         </div>
                     )}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white 
-                            ${loading 
-                                ? 'bg-gray-400 cursor-not-allowed' 
-                                : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-                            }`}
-                    >
-                        {loading ? 'Ajout en cours...' : 'Ajouter le compte'}
-                    </button>
+     
+                    <div className="flex items-center justify-between pt-4">
+                        <p className="text-sm text-gray-500 italic">
+                            Note: Un seul compte bancaire peut être associé au client
+                        </p>
+                        <button
+                            type="submit"
+                            disabled={loading || !newAccount.accountNumber || !userBank}
+                            className={`flex justify-center py-2.5 px-8 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white 
+                                ${loading || !newAccount.accountNumber || !userBank
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                                }`}
+                        >
+                            {loading ? 'Ajout en cours...' : 'Ajouter le compte'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
-    );
+     );
 };
 
 export default BankAccountManagement;

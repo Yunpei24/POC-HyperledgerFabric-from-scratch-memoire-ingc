@@ -25,7 +25,8 @@ preSetupJavaScript() {
 # Déclaration des variables
 CHANNEL_NAME="bceaochannel"
 CHAINCODE_NAME="bceaochaincode"
-CHAINCODE_VERSION="1.0"
+CHAINCODE_VERSION="4.0"
+SEQUENCE=2
 CHAINCODE_PATH="../chaincode-javascript/"
 ORDERER_ADDRESS="localhost:7050"
 ORDERER_TLS_HOSTNAME="orderer0.bceao.com"
@@ -99,7 +100,7 @@ function approveChaincodeForOrg() {
         --name ${CHAINCODE_NAME} \
         --version ${CHAINCODE_VERSION} \
         --package-id ${CC_PACKAGE_ID} \
-        --sequence 1 \
+        --sequence ${SEQUENCE} \
         --tls \
         --cafile ${ORDERER_CA}
     
@@ -113,7 +114,7 @@ function approveChaincodeForOrg() {
         --channelID ${CHANNEL_NAME} \
         --name ${CHAINCODE_NAME} \
         --version ${CHAINCODE_VERSION} \
-        --sequence 1 \
+        --sequence ${SEQUENCE} \
         --tls \
         --cafile ${ORDERER_CA} \
         --output json
@@ -127,7 +128,7 @@ function commitChaincode() {
         --channelID ${CHANNEL_NAME} \
         --name ${CHAINCODE_NAME} \
         --version ${CHAINCODE_VERSION} \
-        --sequence 1 \
+        --sequence ${SEQUENCE} \
         --tls \
         --cafile ${ORDERER_CA} \
         --peerAddresses localhost:7051 \

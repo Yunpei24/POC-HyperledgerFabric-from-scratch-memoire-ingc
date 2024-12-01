@@ -127,37 +127,6 @@ export const getActiveClients = async () => {
 
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// export const createClient = async (clientData) => {
-//     try {
-//         const response = await api.post('/clients/create', clientData);
-        
-//         // Si la réponse contient des similitudes
-//         if (response.data && response.data.similitude === true) {
-//             return {
-//                 similitude: true,
-//                 potentialClient: response.data.potentialClient,
-//                 similarClients: response.data.similarClients
-//             };
-//         }
-
-//         // Si pas de similitudes, retourner le client créé
-//         return response.data;
-
-//     } catch (error) {
-//         // Si l'erreur contient des informations de similitude
-//         if (error.response?.data?.similitude) {
-//             return {
-//                 similitude: true,
-//                 potentialClient: error.response.data.potentialClient,
-//                 similarClients: error.response.data.similarClients
-//             };
-//         }
-
-//         // Sinon, lancer une erreur standard
-//         throw new Error(error.response?.data?.error || 'Erreur lors de la création du client');
-//     }
-// };
-
 export const createClient = async (clientData, maxRetries = 3) => {
     let attempt = 0;
     
@@ -211,9 +180,11 @@ export const updateClient = async (ubi, clientData) => {
     }
 };
 
-export const deactivateClient = async (ubi) => {
+export const deactivateClient = async (ubi, demande_content) => {
     try {
-        const response = await api.delete(`/clients/${ubi}`);
+        const response = await api.delete(`/clients/${ubi}`, {
+            data: { demande_content }  // Envoi du motif dans le body
+        });
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.error || 'Erreur lors de la désactivation du client');

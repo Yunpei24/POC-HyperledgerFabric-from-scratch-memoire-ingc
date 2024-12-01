@@ -217,9 +217,11 @@ class ClientController {
     async deactivateClient(req, res) {
         try {
             const { ubi } = req.params;
+            const { demande_content } = req.body;  // Récupérer depuis le body au lieu des params
+            
             const { contract } = await connectToNetwork();
-
-            await contract.submitTransaction('DeactivateClient', ubi);
+            await contract.submitTransaction('DeactivateClient', ubi, demande_content);
+            
             res.json({ message: 'Client désactivé avec succès' });
         } catch (error) {
             console.error('Erreur deactivateClient:', error);

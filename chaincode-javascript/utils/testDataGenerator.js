@@ -146,6 +146,8 @@ function generateTestClientsData(imagesData, numberOfClients = 21, seed = 'bceao
                     }
                 });
             }
+            const demande_status = 'traité';
+            const demande_content = 'Null';
 
             const client = {
                 ubi,
@@ -157,7 +159,9 @@ function generateTestClientsData(imagesData, numberOfClients = 21, seed = 'bceao
                 accountList,
                 nationalities: selectedNationalities,
                 imageFace: imagesData?.faces?.[clientIndex] || 
-                    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/Base64Default..."
+                    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/Base64Default...",
+                demande_content,
+                demande_status
             };
 
             clientsData.push(client);

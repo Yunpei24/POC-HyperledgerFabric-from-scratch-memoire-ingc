@@ -65,6 +65,8 @@ class ClientManager extends Contract {
                     imageFace: clientData.imageFace,
                     isActive: true,
                     docType: 'client',
+                    demande_content: clientData.demande_content,
+                    demande_status: clientData.demande_status,
                     createdBy: {
                         mspId: mspId,
                         timestamp: timestamp
@@ -145,6 +147,8 @@ class ClientManager extends Contract {
                     imageFace: imageFace || '',
                     isActive: true,
                     docType: 'client',
+                    demande_content: 'Null',
+                    demande_status: 'traité',
                     createdBy: {
                         mspId: mspId,
                         timestamp: timestamp
@@ -400,7 +404,7 @@ class ClientManager extends Contract {
         }
     }
     
-    async DeactivateClient(ctx, ubi) {
+    async DeactivateClient(ctx, ubi, demande_content) {
         // Vérifier l'existence du client
         const exists = await this.ClientExists(ctx, ubi);
         if (!exists) {
@@ -420,13 +424,15 @@ class ClientManager extends Contract {
         const mspId = ctx.clientIdentity.getMSPID();
         const timestamp = this.getTransactionTimestamp(ctx);
         
-        client.isActive = false;
+        //client.isActive = false;
+        client.demande_status = 'En cours de traitement';
+        client.demande_content = demande_content;
         client.modificationHistory = [
             ...(client.modificationHistory || []),
             {
                 mspId: mspId,
                 timestamp: timestamp,
-                action: 'DEACTIVATE'
+                action: 'DEMANDE DESACTIVATION'
             }
         ];
     
