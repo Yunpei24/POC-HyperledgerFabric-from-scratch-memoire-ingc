@@ -213,32 +213,34 @@ class ClientController {
         }
     }
 
-    // Désactiver un client
-    async deactivateClient(req, res) {
+    // Démande Désactivation un client
+    async demandeDeactivateClient(req, res) {
         try {
             const { ubi } = req.params;
             const { demande_content } = req.body;  // Récupérer depuis le body au lieu des params
             
             const { contract } = await connectToNetwork();
-            await contract.submitTransaction('DeactivateClient', ubi, demande_content);
+            await contract.submitTransaction('DemandeDeactivateClient', ubi, demande_content);
             
-            res.json({ message: 'Client désactivé avec succès' });
+            res.json({ message: 'Démande désactivation avec succès' });
         } catch (error) {
-            console.error('Erreur deactivateClient:', error);
+            console.error('Erreur demandeDeactivateClient:', error);
             res.status(500).json({ error: error.message });
         }
     }
 
-    // Activer un client
-    async activateClient(req, res) {
+    // Démande activation un client
+    async demandeActivateClient(req, res) {
         try {
             const { ubi } = req.params;
+            const { demande_content } = req.body;  // Récupérer depuis le body au lieu des params
+            
             const { contract } = await connectToNetwork();
-
-            await contract.submitTransaction('ActivateClient', ubi);
-            res.json({ message: 'Client activé avec succès' });
+            await contract.submitTransaction('DemandeActivateClient', ubi, demande_content);
+            
+            res.json({ message: 'Démande activation avec succès' });
         } catch (error) {
-            console.error('Erreur activateClient:', error);
+            console.error('Erreur demandeActivateClient:', error);
             res.status(500).json({ error: error.message });
         }
     }

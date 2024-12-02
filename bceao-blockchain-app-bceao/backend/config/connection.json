@@ -1,0 +1,17 @@
+{
+    "channelName": "bceaochannel",
+    "chaincodeName": "bceaochaincode",
+    "organizations": {
+        "BCEAOORG": {
+            "mspId": "BCEAOORGMSP",
+            "peers": [
+                {
+                    "name": "peer0.bceaoorg.bceao.com",
+                    "url": "localhost:2024"
+                }
+            ]
+        }
+    },
+    "cryptoPath": "../crypto-material",
+    "ordererUrl": "localhost:7050"
+}

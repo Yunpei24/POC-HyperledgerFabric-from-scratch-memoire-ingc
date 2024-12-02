@@ -180,23 +180,26 @@ export const updateClient = async (ubi, clientData) => {
     }
 };
 
-export const deactivateClient = async (ubi, demande_content) => {
+export const demandeDeactivateClient = async (ubi, demande_content) => {
     try {
-        const response = await api.delete(`/clients/${ubi}`, {
+        const response = await api.put(`/clients/${ubi}/demandedeactivate`, {
             data: { demande_content }  // Envoi du motif dans le body
         });
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.error || 'Erreur lors de la désactivation du client');
+        throw new Error(error.response?.data?.error || 'Erreur lors de la démande désactivation du client');
     }
 };
 
-export const activateClient = async (ubi) => {
+
+export const demandeActivateClient = async (ubi, demande_content) => {
     try {
-        const response = await api.put(`/clients/${ubi}/activate`);
+        const response = await api.put(`/clients/${ubi}/demandeactivate`, {
+            data: { demande_content }  // Envoi du motif dans le body
+        });
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.error || 'Erreur lors de l\'activation du client');
+        throw new Error(error.response?.data?.error || 'Erreur lors de la démande activation du client');
     }
 };
 

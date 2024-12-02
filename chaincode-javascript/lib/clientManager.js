@@ -147,7 +147,7 @@ class ClientManager extends Contract {
                     imageFace: imageFace || '',
                     isActive: true,
                     docType: 'client',
-                    demande_content: 'Null',
+                    demande_content: 'Création',
                     demande_status: 'traité',
                     createdBy: {
                         mspId: mspId,
@@ -404,7 +404,7 @@ class ClientManager extends Contract {
         }
     }
     
-    async DeactivateClient(ctx, ubi, demande_content) {
+    async DemandeDeactivateClient(ctx, ubi, demande_content) {
         // Vérifier l'existence du client
         const exists = await this.ClientExists(ctx, ubi);
         if (!exists) {
@@ -425,14 +425,51 @@ class ClientManager extends Contract {
         const timestamp = this.getTransactionTimestamp(ctx);
         
         //client.isActive = false;
-        client.demande_status = 'En cours de traitement';
-        client.demande_content = demande_content;
+        client.demande_status = 'A TRAITER';
+        client.demande_content = 'motif_desactivation:' + demande_content;
         client.modificationHistory = [
             ...(client.modificationHistory || []),
             {
                 mspId: mspId,
                 timestamp: timestamp,
                 action: 'DEMANDE DESACTIVATION'
+            }
+        ];
+    
+        // Sauvegarder les modifications
+        await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
+        return JSON.stringify(client);
+    }
+
+    async DemandeAtivateClient(ctx, ubi, demande_content) {
+        // Vérifier l'existence du client
+        const exists = await this.ClientExists(ctx, ubi);
+        if (!exists) {
+            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+        }
+    
+        // Récupérer l'état du client directement
+        const clientState = await ctx.stub.getState(ubi);
+        const client = JSON.parse(clientState.toString());
+    
+        // Vérifier si le client est déjà activé
+        if (client.isActive) {
+            throw new Error(`Le client avec l'UBI ${ubi} est déjà activé`);
+        }
+    
+        // Mettre à jour le statut et l'historique
+        const mspId = ctx.clientIdentity.getMSPID();
+        const timestamp = this.getTransactionTimestamp(ctx);
+        
+        //client.isActive = false;
+        client.demande_status = 'A TRAITER';
+        client.demande_content = 'motif_activation:' + demande_content;
+        client.modificationHistory = [
+            ...(client.modificationHistory || []),
+            {
+                mspId: mspId,
+                timestamp: timestamp,
+                action: 'DEMANDE ACTIVATION'
             }
         ];
     
@@ -475,7 +512,88 @@ class ClientManager extends Contract {
         await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
         return JSON.stringify(client);
     }
+
+    async DeactivateClient(ctx, ubi) {
+        // Vérifier l'existence du client
+        const exists = await this.ClientExists(ctx, ubi);
+        if (!exists) {
+            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+        }
     
+        // Récupérer l'état du client directement
+        const clientState = await ctx.stub.getState(ubi);
+        const client = JSON.parse(clientState.toString());
+    
+        // Vérifier si le client est déjà désactivé
+        if (!client.isActive) {
+            throw new Error(`Le client avec l'UBI ${ubi} est déjà désactivé`);
+        }
+    
+        // Mettre à jour le statut et l'historique
+        const mspId = ctx.clientIdentity.getMSPID();
+        const timestamp = this.getTransactionTimestamp(ctx);
+        
+        client.isActive = false;
+        client.modificationHistory = [
+            ...(client.modificationHistory || []),
+            {
+                mspId: mspId,
+                timestamp: timestamp,
+                action: 'DEACTIVATE'
+            }
+        ];
+    
+        // Sauvegarder les modifications
+        await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
+        return JSON.stringify(client);
+    }
+
+    async RejetDemande(ctx, ubi, demande_content) {
+        // Vérifier l'existence du client
+        const exists = await this.ClientExists(ctx, ubi);
+        if (!exists) {
+            throw new Error(`Le client avec l'UBI ${ubi} n'existe pas`);
+        }
+    
+        // Récupérer l'état du client directement
+        const clientState = await ctx.stub.getState(ubi);
+        const client = JSON.parse(clientState.toString());
+    
+        // Mettre à jour le statut et l'historique
+        const mspId = ctx.clientIdentity.getMSPID();
+        const timestamp = this.getTransactionTimestamp(ctx);
+
+        client.demande_status = 'A TRAITER';
+        client.demande_content = 'motif_rejet:' + demande_content;
+
+        if (client.isActive) {
+            // Demande de désactivation
+            client.modificationHistory = [
+                ...(client.modificationHistory || []),
+                {
+                    mspId: mspId,
+                    timestamp: timestamp,
+                    action: 'REJET DESACTIVATION'
+                }
+            ];
+        }else{
+            // Demande d'activation
+            client.modificationHistory = [
+                ...(client.modificationHistory || []),
+                {
+                    mspId: mspId,
+                    timestamp: timestamp,
+                    action: 'REJET ACTIVATION'
+                }
+            ];
+        }
+    
+        // Sauvegarder les modifications
+        await ctx.stub.putState(ubi, Buffer.from(JSON.stringify(sortKeysRecursive(client))));
+        return JSON.stringify(client);
+    }
+    
+
     async AddAccount(ctx, ubi, accountNumber, bankName) {
         // Vérifier l'existence du client
         const exists = await this.ClientExists(ctx, ubi);

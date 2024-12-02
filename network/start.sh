@@ -19,6 +19,10 @@ cryptogen generate --config=./cryptogen-input/crypto-config-ecobank.yaml --outpu
 printSeparator "Generate crypto-material for Corisbank"
 cryptogen generate --config=./cryptogen-input/crypto-config-corisbank.yaml --output="crypto-material"
 
+printSeparator "Generate crypto-material for BCEAO"
+cryptogen generate --config=./cryptogen-input/crypto-config-bceaoorg.yaml --output="crypto-material"
+
+
 printSeparator "Generate crypto-material for Orderer"
 cryptogen generate --config=./cryptogen-input/crypto-config-orderer.yaml --output="crypto-material"
 
@@ -30,7 +34,7 @@ configtxgen -profile ApNetworkProfile -configPath ${PWD}/config -channelID syste
 # ----------------------- DÉMARRAGE DU RÉSEAU -----------------------#
 # Lancement des conteneurs Docker pour chaque organisation
 printSeparator "Start Network within Docker Containers"
-docker-compose -f ./docker/docker-compose-orderer.yaml -f ./docker/docker-compose-ecobank.yaml -f ./docker/docker-compose-corisbank.yaml up -d
+docker-compose -f ./docker/docker-compose-orderer.yaml -f ./docker/docker-compose-ecobank.yaml -f ./docker/docker-compose-corisbank.yaml -f ./docker/docker-compose-bceaoorg.yaml up -d
 
 # ----------------------- CONFIGURATION DU CANAL -----------------------#
 # Création de la transaction de création du canal
@@ -43,6 +47,10 @@ configtxgen -profile ApChannelProfile -configPath ${PWD}/config -outputAnchorPee
 
 printSeparator "Create Anchor Peers Update for Corisbank"
 configtxgen -profile ApChannelProfile -configPath ${PWD}/config -outputAnchorPeersUpdate ./channel-artifacts/CorisbankMSPanchors.tx -channelID bceaochannel -asOrg Corisbank
+
+printSeparator "Create Anchor Peers Update for BCEAO"
+configtxgen -profile ApChannelProfile -configPath ${PWD}/config -outputAnchorPeersUpdate ./channel-artifacts/BCEAOORGMSPanchors.tx -channelID bceaochannel -asOrg BCEAOORG
+
 printSeparator "Wait 3 seconds for network to come up" && sleep 3
 
 # ----------------------- CONFIGURATION ECOBANK -----------------------#
@@ -91,6 +99,27 @@ switchIdentity "Corisbank" 8042 "peer1" && echoCurrentFabricEnvironment && sleep
 printSeparator "Join Corisbank to channel"
 peer channel join -b ./channel-artifacts/bceaochannel.block
 
+# ----------------------- CONFIGURATION BCEAO -----------------------#
+# Configuration du peer0 de BCEAOORG
+printSeparator "Set Identity to peer0 of BCEAOORG"
+switchIdentity "BCEAOORG" 2024 "peer0" && echoCurrentFabricEnvironment && sleep 1
+
+# Rejoindre le canal avec peer0 de BCEAOORG
+printSeparator "Join BCEAOORG to channel"
+peer channel join -b ./channel-artifacts/bceaochannel.block
+
+# Mise à jour des peers ancres pour BCEAOORG
+printSeparator "Update Anchor Peers as BCEAOORG"
+peer channel update -o localhost:7050 --ordererTLSHostnameOverride orderer0.bceao.com -c bceaochannel -f ./channel-artifacts/BCEAOORGMSPanchors.tx --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA
+
+# Configuration du peer1 de BCEAOORG
+printSeparator "Set Identity to peer1 of BCEAOORG"
+switchIdentity "BCEAOORG" 3024 "peer1" && echoCurrentFabricEnvironment && sleep 1
+
+# Rejoindre le canal avec peer1 de BCEAOORG
+printSeparator "Join BCEAOORG to channel"
+peer channel join -b ./channel-artifacts/bceaochannel.block
+
 # ----------------------- CONFIGURATION DES PERMISSIONS -----------------------#
 # Attribution des droits d'accès au matériel cryptographique
 sudo chmod -R a=rwx ./crypto-material/
@@ -99,16 +128,19 @@ sudo chmod -R a=rwx ./crypto-material/
 sudo rm -r ../explorer/crypto-material/
 sudo rm -r ../bceao-blockchain-app/crypto-material/
 sudo rm -r ../bceao-blockchain-app-corisbank/crypto-material/
+sudo rm -r ../bceao-blockchain-app-bceao/crypto-material/
 
 # Copie du nouveau matériel cryptographique vers les applications
 sudo cp -r ./crypto-material ../explorer
 sudo mkdir -p ../bceao-blockchain-app/crypto-material/peerOrganizations && sudo cp -r ./crypto-material/peerOrganizations/ecobank.bceao.com ../bceao-blockchain-app/crypto-material/peerOrganizations
 sudo mkdir -p ../bceao-blockchain-app-corisbank/crypto-material/peerOrganizations && sudo cp -r ./crypto-material/peerOrganizations/corisbank.bceao.com ../bceao-blockchain-app-corisbank/crypto-material/peerOrganizations
+sudo mkdir -p ../bceao-blockchain-app-bceao/crypto-material/peerOrganizations && sudo cp -r ./crypto-material/peerOrganizations/bceaoorg.bceao.com ../bceao-blockchain-app-bceao/crypto-material/peerOrganizations
 
 
 # Attribution des droits d'accès pour les applications
 sudo chmod -R a=rwx ../explorer/crypto-material/
 sudo chmod -R a=rwx ../bceao-blockchain-app/crypto-material/
 sudo chmod -R a=rwx ../bceao-blockchain-app-corisbank/crypto-material/
+sudo chmod -R a=rwx ../bceao-blockchain-app-bceao/crypto-material/
 
 printSeparator "Done!"

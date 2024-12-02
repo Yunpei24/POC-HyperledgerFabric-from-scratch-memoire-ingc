@@ -70,6 +70,30 @@ Organizations:
         AnchorPeers:
             - Host: peer0.corisbank.bceao.com
               Port: 8051
+    
+    # Configuration de la banque Ecobank
+    - &BCEAOORG
+        Name: BCEAOORG
+        ID: BCEAOORGMSP
+        MSPDir: ../crypto-material/peerOrganizations/bceaoorg.bceao.com/msp
+        # Politiques spécifiques à Ecobank
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('BCEAOORGMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('BCEAOORGMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('BCEAOORGMSP.admin')"
+            Endorsement:        # Politique d'approbation des transactions
+                Type: Signature
+                Rule: "OR('BCEAOORGMSP.member')"
+        # Définition du peer ancre pour Ecobank
+        AnchorPeers:
+            - Host: peer0.bceaoorg.bceao.com
+              Port: 2024
 
 # Définition des capacités du réseau (fonctionnalités activées)
 Capabilities:
@@ -168,6 +192,7 @@ Profiles:
                 Organizations:
                     - *Ecobank
                     - *Corisbank
+                    - *BCEAOORG
 
     # Profil pour la création du canal
     ApChannelProfile:
@@ -178,5 +203,6 @@ Profiles:
             Organizations:
                 - *Ecobank
                 - *Corisbank
+                - *BCEAOORG
             Capabilities:
                 <<: *ApplicationCapabilities

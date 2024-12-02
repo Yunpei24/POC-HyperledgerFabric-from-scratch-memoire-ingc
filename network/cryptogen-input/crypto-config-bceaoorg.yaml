@@ -1,0 +1,11 @@
+# Configuration des organisations Peer pour Ecobank
+PeerOrgs:
+ # Définition de l'organisation Ecobank
+ - Name: BCEAOORG          # Nom de l'organisation
+   Domain: bceaoorg.bceao.com    # Domaine utilisé pour générer les certificats
+
+   # Configuration du template pour les peers
+   Template:
+     Count: 2    # Nombre de peers à créer pour cette organisation (peer0 et peer1)
+     SANS:       # Subject Alternative Names pour les certificats TLS
+       - localhost   # Permet l'accès local aux peers pendant le développement

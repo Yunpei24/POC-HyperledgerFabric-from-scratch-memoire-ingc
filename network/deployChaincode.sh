@@ -25,8 +25,8 @@ preSetupJavaScript() {
 # Déclaration des variables
 CHANNEL_NAME="bceaochannel"
 CHAINCODE_NAME="bceaochaincode"
-CHAINCODE_VERSION="4.0"
-SEQUENCE=2
+CHAINCODE_VERSION="1.0"
+SEQUENCE=1
 CHAINCODE_PATH="../chaincode-javascript/"
 ORDERER_ADDRESS="localhost:7050"
 ORDERER_TLS_HOSTNAME="orderer0.bceao.com"
@@ -168,6 +168,9 @@ packageChaincode
 # Installation sur tous les peers
 printSeparator "Installing on All Peers"
 
+# BCEAO peers
+installChaincode "BCEAOORG" "peer0" 2024
+
 # Ecobank peers
 installChaincode "Ecobank" "peer0" 7051
 #installChaincode "Ecobank" "peer1" 7042
@@ -177,6 +180,7 @@ installChaincode "Corisbank" "peer0" 8051
 #installChaincode "Corisbank" "peer1" 8042
 
 # Approbation par les organisations
+approveChaincodeForOrg "BCEAOORG" "peer0" 2024
 approveChaincodeForOrg "Ecobank" "peer0" 7051
 approveChaincodeForOrg "Corisbank" "peer0" 8051
 

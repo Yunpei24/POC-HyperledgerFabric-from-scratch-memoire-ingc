@@ -146,8 +146,8 @@ function generateTestClientsData(imagesData, numberOfClients = 21, seed = 'bceao
                     }
                 });
             }
-            const demande_status = 'traité';
-            const demande_content = 'Null';
+            const demande_status = 'TRAITE';
+            const demande_content = 'Création';
 
             const client = {
                 ubi,

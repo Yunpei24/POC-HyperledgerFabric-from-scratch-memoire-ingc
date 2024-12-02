@@ -2,7 +2,7 @@
 # stop-network.sh
 
 # Définir les fichiers docker-compose à utiliser
-COMPOSE_FILES="-f ./docker/docker-compose-ecobank.yaml -f ./docker/docker-compose-corisbank.yaml -f ./docker/docker-compose-orderer.yaml"
+COMPOSE_FILES="-f ./docker/docker-compose-ecobank.yaml -f ./docker/docker-compose-corisbank.yaml -f ./docker/docker-compose-orderer.yaml -f ./docker/docker-compose-bceaoorg.yaml"
 
 # Arrêter tous les containers
 echo "Arrêt des containers..."

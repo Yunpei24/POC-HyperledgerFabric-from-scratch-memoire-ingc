@@ -4,8 +4,8 @@ require('dotenv').config();
 
 // Pour le développement, nous utilisons des utilisateurs en dur
 const users = {
-    'admin_corisbank': {
-        username: 'admin_corisbank',
+    'admin_bceao': {
+        username: 'admin_bceao',
         password: 'admin123',
         organization: 'Corisbank',
         role: 'admin'

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getClient, deactivateClient, activateClient } from '../services/api';
+import { getClient, demandeDeactivateClient, demandeActivateClient } from '../services/api';
 import BankAccountManagement from './BankAccountManagement';
 import NationalityManagement from './NationalitiesManagement';
 import { ImagePreview } from './common/ImagePreview';
 import { useAuth } from '../context/AuthContext';
 import DeactivationModal from './modals/DeactivationModal';
+import ActivationModal from './modals/ActivateModal';
 
 const AVAILABLE_BANKS = [
     { id: 'ecobank', name: 'Ecobank' },
@@ -26,6 +27,8 @@ function ClientDetails() {
     const { user } = useAuth();
     const [isDeactivationModalOpen, setIsDeactivationModalOpen] = useState(false);
     const [deactivationLoading, setDeactivationLoading] = useState(false);
+    const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
+    const [activationLoading, setActivationLoading] = useState(false);
 
     // Extraire l'ID de la banque à partir du rôle utilisateur
     const getUserBankId = () => {
@@ -90,6 +93,10 @@ function ClientDetails() {
         setIsDeactivationModalOpen(true);
     };
 
+    const handleActivateClick = () => {
+        setIsActivationModalOpen(true);
+    };
+
     const handleDeactivationConfirm = async (motif) => {
         if (!motif.trim()) {
             setError('Le motif est requis');
@@ -97,8 +104,8 @@ function ClientDetails() {
         }
     
         try {
-            setDeactivationLoading(true);
-            await deactivateClient(ubi, motif.trim());
+            setActivationLoading(true);
+            await demandeDeactivateClient(ubi, motif.trim());
             navigate('/');
         } catch (err) {
             setError(err.message);
@@ -108,17 +115,35 @@ function ClientDetails() {
         }
     };
 
-    const handleActivate = async () => {
-        if (window.confirm('Êtes-vous sûr de vouloir activer ce client ?')) {
-            try {
-                await activateClient(ubi);
-                const updatedClient = await getClient(ubi);
-                setClient(updatedClient);
-            } catch (err) {
-                setError(err.message);
-            }
+    const handleActivationConfirm = async (motif) => {
+        if (!motif.trim()) {
+            setError('Le motif est requis');
+            return;
+        }
+    
+        try {
+            setActivationLoading(true);
+            await demandeActivateClient(ubi, motif.trim());
+            navigate('/');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setActivationLoading(false);
+            setIsActivationModalOpen(false);
         }
     };
+
+    // const handleActivate = async () => {
+    //     if (window.confirm('Êtes-vous sûr de vouloir activer ce client ?')) {
+    //         try {
+    //             await activateClient(ubi);
+    //             const updatedClient = await getClient(ubi);
+    //             setClient(updatedClient);
+    //         } catch (err) {
+    //             setError(err.message);
+    //         }
+    //     }
+    // };
 
     if (loading) {
         return (
@@ -254,7 +279,7 @@ function ClientDetails() {
                                 </button>
                             ) : (
                                 <button
-                                    onClick={handleActivate}
+                                    onClick={handleActivateClick}
                                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                                 >
                                     Demande Activation
@@ -271,6 +296,14 @@ function ClientDetails() {
                 onConfirm={handleDeactivationConfirm}
                 loading={deactivationLoading}
             />
+
+            <ActivationModal
+                isOpen={isActivationModalOpen}
+                onClose={() => setIsActivationModalOpen(false)}
+                onConfirm={handleActivationConfirm}
+                loading={activationLoading}
+            />
+
         </>
     );
 }

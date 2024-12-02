@@ -36,8 +36,8 @@ router.get('/active', clientController.getActiveClients);
 router.get('/:ubi', clientController.getClient);
 router.post('/create', clientController.createClient);
 router.put('/:ubi', clientController.updateClient);
-router.delete('/:ubi', clientController.deactivateClient);
-router.put('/:ubi/activate', clientController.activateClient);
+router.put('/:ubi/demandeactivate', clientController.demandeActivateClient);
+router.put('/:ubi/demandedeactivate', clientController.demandeDeactivateClient);
 router.post('/:ubi/nationalities', clientController.addNationality);
 router.delete('/:ubi/nationalities/:countryName', clientController.removeNationality);
 

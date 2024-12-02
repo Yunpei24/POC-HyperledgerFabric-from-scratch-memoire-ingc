@@ -22,7 +22,8 @@
 		"bceaochannel": {
 			"peers": {
 				"peer0.ecobank.bceao.com": {},
-				"peer0.corisbank.bceao.com": {}
+				"peer0.corisbank.bceao.com": {},
+				"peer0.bceaoorg.bceao.com": {}
 			}
 		}
 	},
@@ -49,6 +50,19 @@
 			"signedCert": {
 				"path": "/tmp/crypto/peerOrganizations/corisbank.bceao.com/users/Admin@corisbank.bceao.com/msp/signcerts/Admin@corisbank.bceao.com-cert.pem"
 			}
+		},
+		"BCEAOORGMSP": {
+			"mspid": "BCEAOORGMSP",
+			"adminPrivateKey": {
+				"path": "/tmp/crypto/peerOrganizations/bceaoorg.bceao.com/users/Admin@bceaoorg.bceao.com/msp/keystore/priv_sk"
+			},
+			"peers": [
+				"peer0.bceaoorg.bceao.com",
+				"peer1.bceaoorg.bceao.com"
+			],
+			"signedCert": {
+				"path": "/tmp/crypto/peerOrganizations/bceaoorg.bceao.com/users/Admin@bceaoorg.bceao.com/msp/signcerts/Admin@bceaoorg.bceao.com-cert.pem"
+			}
 		}
 	},
 	"peers": {
@@ -63,6 +77,12 @@
 				"path": "/tmp/crypto/peerOrganizations/corisbank.bceao.com/peers/peer0.corisbank.bceao.com/tls/ca.crt"
 			},
 			"url": "grpcs://peer0.corisbank.bceao.com:8051"
+		},
+		"peer0.bceaoorg.bceao.com": {
+			"tlsCACerts": {
+				"path": "/tmp/crypto/peerOrganizations/bceaoorg.bceao.com/peers/peer0.bceaoorg.bceao.com/tls/ca.crt"
+			},
+			"url": "grpcs://peer0.bceaoorg.bceao.com:2024"
 		}
 	}
 }

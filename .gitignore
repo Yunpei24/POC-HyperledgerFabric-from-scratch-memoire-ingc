@@ -45,3 +45,17 @@ network/crypto-material
 network/system-genesis-block
 
 network/bceaochaincode.tar.gz
+
+bceao-blockchain-app-bceao/backend/node_modules
+
+bceao-blockchain-app-bceao/crypto-material
+
+bceao-blockchain-app-bceao/frontend/node_modules
+
+bceao-blockchain-app-bceao/node_modules
+
+bceao-blockchain-app-bceao/backend/package-lock.json
+
+bceao-blockchain-app-bceao/frontend/package-lock.json
+
+bceao-blockchain-app-bceao/package-lock.json
