@@ -183,23 +183,22 @@ export const updateClient = async (ubi, clientData) => {
 export const demandeDeactivateClient = async (ubi, demande_content) => {
     try {
         const response = await api.put(`/clients/${ubi}/demandedeactivate`, {
-            data: { demande_content }  // Envoi du motif dans le body
+            demande_content: demande_content
         });
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.error || 'Erreur lors de la démande désactivation du client');
+        throw new Error(error.response?.data?.error || 'Erreur lors de la demande de désactivation');
     }
 };
-
 
 export const demandeActivateClient = async (ubi, demande_content) => {
     try {
         const response = await api.put(`/clients/${ubi}/demandeactivate`, {
-            data: { demande_content }  // Envoi du motif dans le body
+            demande_content: demande_content
         });
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.error || 'Erreur lors de la démande activation du client');
+        throw new Error(error.response?.data?.error || 'Erreur lors de la demande d\'activation');
     }
 };
 

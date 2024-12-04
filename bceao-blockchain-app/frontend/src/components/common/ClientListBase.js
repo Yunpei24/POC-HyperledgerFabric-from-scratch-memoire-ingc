@@ -84,10 +84,15 @@ export default function ClientListBase({
                                 <th className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Statut Client
                                 </th>
+                                {showSimilarity && (
+                                <th className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Similarité
+                                </th>
+                                )}
                                 <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Actions
                                 </th>
-                                <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                <th className="w-[12%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Statut Demande
                                 </th>
                             </tr>
@@ -123,19 +128,22 @@ export default function ClientListBase({
                                     </td>
                                     {showSimilarity && (
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            {client.similarity !== undefined && (
-                                                <div className="flex items-center">
-                                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                                                        <div
-                                                            className="bg-blue-600 h-2.5 rounded-full"
-                                                            style={{ width: `${client.similarity * 100}%` }}
-                                                        ></div>
-                                                    </div>
-                                                    <span className="text-sm text-gray-900">
-                                                        {(client.similarity * 100).toFixed(1)}%
-                                                    </span>
+                                            <div className="flex items-center">
+                                                {/* Conteneur de la barre de progression */}
+                                                <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                                    <div
+                                                        className="bg-blue-600 h-2 rounded-full"
+                                                        style={{ 
+                                                            width: `${Math.round(client.similarity * 100)}%`,
+                                                            transition: 'width 0.5s ease-in-out'
+                                                        }}
+                                                    />
                                                 </div>
-                                            )}
+                                                {/* Affichage du pourcentage */}
+                                                <span className="text-sm font-medium text-gray-900">
+                                                    {Math.round(client.similarity * 100)}%
+                                                </span>
+                                            </div>
                                         </td>
                                     )}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -163,7 +171,7 @@ export default function ClientListBase({
                                             <button
                                                 onClick={() => handleDemandeClick(client.demande_content)}
                                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${
-                                                    client.demande_status === 'traité'
+                                                    client.demande_status === 'TRAITE'
                                                         ? 'bg-green-100 text-green-800 hover:bg-green-200'
                                                         : 'bg-orange-100 text-orange-800 hover:bg-orange-200'
                                                 }`}

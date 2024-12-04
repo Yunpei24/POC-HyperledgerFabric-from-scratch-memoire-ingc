@@ -217,12 +217,16 @@ class ClientController {
     async demandeDeactivateClient(req, res) {
         try {
             const { ubi } = req.params;
-            const { demande_content } = req.body;  // Récupérer depuis le body au lieu des params
-            
+            const { demande_content } = req.body;
+    
+            // S'assurer que les arguments sont des chaînes de caractères
+            const ubiString = String(ubi);
+            const demandeString = String(demande_content);
+    
             const { contract } = await connectToNetwork();
-            await contract.submitTransaction('DemandeDeactivateClient', ubi, demande_content);
+            await contract.submitTransaction('DemandeDeactivateClient', ubiString, demandeString);
             
-            res.json({ message: 'Démande désactivation avec succès' });
+            res.json({ message: 'Demande de désactivation soumise avec succès' });
         } catch (error) {
             console.error('Erreur demandeDeactivateClient:', error);
             res.status(500).json({ error: error.message });
@@ -234,9 +238,13 @@ class ClientController {
         try {
             const { ubi } = req.params;
             const { demande_content } = req.body;  // Récupérer depuis le body au lieu des params
+
+            // S'assurer que les arguments sont des chaînes de caractères
+            const ubiString = String(ubi);
+            const demandeString = String(demande_content);
             
             const { contract } = await connectToNetwork();
-            await contract.submitTransaction('DemandeActivateClient', ubi, demande_content);
+            await contract.submitTransaction('DemandeAtivateClient', ubiString, demandeString);
             
             res.json({ message: 'Démande activation avec succès' });
         } catch (error) {

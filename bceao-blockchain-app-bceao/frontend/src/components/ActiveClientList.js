@@ -1,5 +1,5 @@
 // frontend/src/components/ActiveClientList.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getActiveClients, getClientHistory } from '../services/api';
 import ClientListBase from './common/ClientListBase';
 import ClientHistoryModal from './common/ClientHistoryModal';
@@ -14,10 +14,15 @@ export default function ActiveClientList() {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedClientHistory, setSelectedClientHistory] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
 
   useEffect(() => {
     loadClients();
   }, []);
+
+  useEffect(() => {
+    filterClients();
+  }, [clients, showPendingOnly]);
 
   const loadClients = async () => {
     try {
@@ -36,63 +41,90 @@ export default function ActiveClientList() {
     }
   };
 
+  const filterClients = useCallback(() => {
+    let filtered = [...clients];
+    
+    if (showPendingOnly) {
+      filtered = filtered.filter(client => client.demande_status === 'A TRAITER');
+    }
+
+    setFilteredClients(filtered);
+    setQueryInfo(prev => ({
+      ...prev,
+      totalResults: filtered.length,
+      searchType: showPendingOnly ? 'Demandes en attente' : 'Clients Actifs'
+    }));
+  }, [clients, showPendingOnly, setFilteredClients, setQueryInfo]);
+
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  useEffect(() => {
+    filterClients();
+  }, [filterClients]);
+
   const handleSearch = ({ type, params, result, error: searchError, searchType }) => {
-    // Gestion des erreurs
     if (searchError) {
       setError(searchError);
       return;
     }
 
-    // Réinitialiser l'erreur
     setError(null);
+    let searchResults = [];
 
     if (type === 'FACE') {
       if (!result || result.length === 0) {
-        // Si aucune correspondance faciale, afficher la liste vide avec le message
-        setFilteredClients([]); // ICI: on met une liste vide au lieu de clients
+        setFilteredClients([]);
         setQueryInfo(prev => ({
           ...prev,
-          totalResults: 0, // ICI: on met 0 au lieu de clients.length
+          totalResults: 0,
           searchType: 'Face Recognition',
           message: "Aucun client similaire trouvé"
         }));
       } else {
+        // Ne pas filtrer les résultats de reconnaissance faciale
         setFilteredClients(result);
         setQueryInfo(prev => ({
           ...prev,
           totalResults: result.length,
-          searchType: 'Face Recognition',
-          message: null
+          searchType: 'Face Recognition'
         }));
       }
+      return; // Important: sortir de la fonction ici
     } else if (type === 'TEXT') {
-      let filtered = [...clients];
+      searchResults = [...clients];
       const hasSearchCriteria = params.ubi || params.lastName || params.firstName;
 
       if (hasSearchCriteria) {
         if (params.ubi) {
-          filtered = filtered.filter(client =>
+          searchResults = searchResults.filter(client =>
             client.UBI.toLowerCase().includes(params.ubi.toLowerCase().trim())
           );
         }
         if (params.lastName) {
-          filtered = filtered.filter(client =>
+          searchResults = searchResults.filter(client =>
             client.lastName.toLowerCase().includes(params.lastName.toLowerCase().trim())
           );
         }
         if (params.firstName) {
-          filtered = filtered.filter(client =>
+          searchResults = searchResults.filter(client =>
             client.firstName.toLowerCase().includes(params.firstName.toLowerCase().trim())
           );
         }
       }
 
-      setFilteredClients(filtered);
+      // Appliquer le filtre des demandes en attente si activé
+      if (showPendingOnly) {
+        searchResults = searchResults.filter(client => client.demande_status === 'A TRAITER');
+      }
+
+      setFilteredClients(searchResults);
       setQueryInfo(prev => ({
         ...prev,
-        totalResults: filtered.length,
+        totalResults: searchResults.length,
         searchType: 'Text Search',
-        message: hasSearchCriteria && filtered.length === 0 ? 
+        message: hasSearchCriteria && searchResults.length === 0 ? 
           "Aucun client ne correspond aux critères de recherche" : 
           null
       }));
@@ -115,19 +147,35 @@ export default function ActiveClientList() {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="space-y-6">
+        {/* Toggle pour les demandes en attente */}
+        <div className="flex items-center bg-white p-4 rounded-lg shadow">
+          <label className="inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showPendingOnly}
+              onChange={(e) => setShowPendingOnly(e.target.checked)}
+              className="form-checkbox h-5 w-5 text-blue-600 rounded"
+            />
+            <span className="ml-2 text-gray-700">
+              Afficher uniquement les demandes en attente
+            </span>
+          </label>
+        </div>
+
         <ClientSearchBar 
           onSearch={handleSearch} 
-          clients={clients} // Passer la liste des clients
+          clients={clients}
         />
+
         <ClientListBase
-          title="Clients Actifs"
+          title={showPendingOnly ? "Clients Actifs - Demandes en attente" : "Clients Actifs"}
           clients={filteredClients}
           queryInfo={queryInfo}
           loading={loading}
           error={error}
           onShowHistory={handleShowHistory}
           showSimilarity={queryInfo?.searchType === 'Face Recognition'}
-          message={queryInfo?.message} // Ajout du message
+          message={queryInfo?.message}
         />
 
         {showHistory && (

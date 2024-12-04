@@ -148,7 +148,7 @@ class ClientManager extends Contract {
                     isActive: true,
                     docType: 'client',
                     demande_content: 'Création',
-                    demande_status: 'traité',
+                    demande_status: 'TRAITE',
                     createdBy: {
                         mspId: mspId,
                         timestamp: timestamp
@@ -499,6 +499,8 @@ class ClientManager extends Contract {
         const timestamp = this.getTransactionTimestamp(ctx);
         
         client.isActive = true;
+        client.demande_status = 'TRAITE';
+        client.demande_content = 'Activation acceptée';
         client.modificationHistory = [
             ...(client.modificationHistory || []),
             {
@@ -534,6 +536,8 @@ class ClientManager extends Contract {
         const timestamp = this.getTransactionTimestamp(ctx);
         
         client.isActive = false;
+        client.demande_status = 'TRAITE';
+        client.demande_content = 'Déactivation acceptée';
         client.modificationHistory = [
             ...(client.modificationHistory || []),
             {
@@ -563,7 +567,7 @@ class ClientManager extends Contract {
         const mspId = ctx.clientIdentity.getMSPID();
         const timestamp = this.getTransactionTimestamp(ctx);
 
-        client.demande_status = 'A TRAITER';
+        client.demande_status = 'TRAITE';
         client.demande_content = 'motif_rejet:' + demande_content;
 
         if (client.isActive) {

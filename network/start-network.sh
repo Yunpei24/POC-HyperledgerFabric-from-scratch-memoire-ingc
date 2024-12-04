@@ -16,7 +16,7 @@ export CORE_PEER_MSPCONFIGPATH=${PWD}/crypto-material/peerOrganizations/ecobank.
 export CORE_PEER_ADDRESS=localhost:7051
 
 # Définir les fichiers docker-compose à utiliser
-COMPOSE_FILES="-f ./docker/docker-compose-ecobank.yaml -f ./docker/docker-compose-corisbank.yaml -f ./docker/docker-compose-orderer.yaml"
+COMPOSE_FILES="-f ./docker/docker-compose-ecobank.yaml -f ./docker/docker-compose-corisbank.yaml -f ./docker/docker-compose-orderer.yaml -f ./docker/docker-compose-bceaoorg.yaml"
 
 # Démarrer tous les containers
 echo "Démarrage des containers..."

@@ -200,8 +200,8 @@ export const deactivateClient = async (ubi) => {
 
 export const rejetDemande = async (ubi, demande_content) => {
     try {
-        const response = await api.put(`/clients/${ubi}/rejetDemande`, {
-            data: { demande_content }  // Envoi du motif dans le body
+        const response = await api.put(`/clients/${ubi}/rejetdemande`, {
+            demande_content: demande_content  // Envoi du motif dans le body
         });
         return response.data;
     } catch (error) {
